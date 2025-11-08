@@ -1,0 +1,33 @@
+{
+  "name": "ednexus",
+  "version": "1.0.0",
+  "description": "WebDevelopment Project",
+  "homepage": "https://github.com/seguvega/EdNexus#readme",
+  "bugs": {
+    "url": "https://github.com/seguvega/EdNexus/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seguvega/EdNexus.git"
+  },
+  "license": "ISC",
+  "author": "Group6",
+  "type": "commonjs",
+  "main": "Server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express-jwt": "^8.5.1",
+    "http-errors": "^2.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.19.0",
+    "morgan": "^1.10.1"
+  },
+  "devDependencies": {}
+}
