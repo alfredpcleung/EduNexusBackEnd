@@ -1,15 +1,21 @@
 var Router = require('express').Router();
 var UserController = require('../Controllers/user');
+var UserAuth = require('../Controllers/auth');
 
 Router.get('/', UserController.list);
 Router.post('/', UserController.create);
 Router.param('id', UserController.userByID);
-Router.get('/:id',  
+Router.get('/:id',
+    UserAuth.requireSignin,  
     UserController.hasAuthorization);
 Router.put('/:id', 
+    UserAuth.requireSignin,
     UserController.hasAuthorization, 
     UserController.update);
-Router.delete('/:id', UserController.hasAuthorization, UserController.delete);
+Router.delete('/:id', 
+    UserAuth.requireSignin,
+    UserController.hasAuthorization, 
+    UserController.delete);
 Router.put('/setadmin/:userID',  
     UserController.setAdmin);
 
