@@ -36,11 +36,6 @@ module.exports.signin = async function(req, res, next) {
     }
 }
 
-module.exports.logtoken = async function (req, res, next) {
-    console.log(req.headers);
-    next();
-}
-
 module.exports.requireSignin = expressjwt(
     {
         secret: process.env.SECRETKEY,
@@ -48,3 +43,10 @@ module.exports.requireSignin = expressjwt(
         userProperty: 'auth' 
     }
 );
+
+/**
+ module.exports.logtoken = async function (req, res, next) {
+    console.log(req.headers);
+    next();
+}
+*/

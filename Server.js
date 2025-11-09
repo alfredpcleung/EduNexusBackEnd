@@ -5,7 +5,7 @@ var logger = require('morgan');
 var configDb = require('./Config/db.js');
 var userRouter = require('./App/Routers/user.js');
 var courseRotuer = require('./App/Routers/course.js')
-
+var authRouter = require("./App/Routers/auth.js")
 
 var app = Express();
 configDb();
@@ -14,13 +14,13 @@ app.use(logger('dev') );
 app.use(Express.json());
 app.use(Express.urlencoded({ extended: false }));
 
+app.use('/auth', authRouter);
+app.use('/users', userRouter);
+app.use('/courses', courseRotuer);
+
 app.use(function(req, res, next) {
   next(createError(404));
 });
-
-
-app.use('/users', userRouter);
-app.use('/courses', courseRotuer);
 
 // error handler
 app.use(function(err, req, res, next) {

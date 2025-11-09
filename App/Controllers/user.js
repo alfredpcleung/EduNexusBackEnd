@@ -29,7 +29,17 @@ module.exports.list = async function (req, res, next) {
     }
 }
 
-module.exports.userByID = async function (req, res, next) {
+module.exports.LisByID = async function (req, res, next) {
+    try {
+        let Luser = await UserModel.findOne({ _id: req.params.id });
+        res.json(Luser);
+    } catch (error) {
+        console.log(error);
+        next(error);
+    }
+}
+
+module.exports.SetUserByID = async function (req, res, next) {
     try {
         req.user = await UserModel.findOne({ _id: req.params.id }, '-hashed_password -salt');
         next();

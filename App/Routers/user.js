@@ -4,10 +4,11 @@ var UserAuth = require('../Controllers/auth');
 
 Router.get('/', UserController.list);
 Router.post('/', UserController.create);
-Router.param('id', UserController.userByID);
+Router.param('id', UserController.SetUserByID);
 Router.get('/:id',
     UserAuth.requireSignin,  
-    UserController.hasAuthorization);
+    UserController.hasAuthorization,
+    UserController.LisByID);
 Router.put('/:id', 
     UserAuth.requireSignin,
     UserController.hasAuthorization, 
