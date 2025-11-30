@@ -5,6 +5,7 @@ var logger = require('morgan');
 var configDb = require('./Config/db.js');
 var userRouter = require('./App/Routers/user.js');
 var courseRotuer = require('./App/Routers/course.js')
+var authRouter = require("./App/Routers/auth.js");
 const firebaseAdmin = require("./Config/firebaseAdmin.js");
 
 var app = Express();
@@ -16,6 +17,7 @@ app.use(logger('dev') );
 app.use(Express.json());
 app.use(Express.urlencoded({ extended: false }));
 
+app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/courses', courseRotuer);
 
