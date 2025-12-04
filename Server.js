@@ -39,7 +39,7 @@ app.use(function(err, req, res, next) {
 });
 
 
-app.listen(3000 || 10000, ()=> {
+app.listen(3000 || 1000, ()=> {
     console.log("Server is running at  http://localhost:3000/");
     //SebastianVelasco
 });

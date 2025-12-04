@@ -4,10 +4,17 @@ let crypto = require('crypto');
 
 const UserSchema = new Schema(
     {
-         uid: {
+        uid: {
             type: String,
             unique: true,
-            required: "Uid is required",
+            required: "Uid is required"
+        },
+        displayName: {
+            type: String
+        },   uid: {
+            type: String,
+            unique: true,
+            required: "Uid is required"
         },
         displayName: {
             type: String
@@ -18,13 +25,13 @@ const UserSchema = new Schema(
             match: [/.+\@.+\..+/, "Please fill a valid e-mail address"]
         },
         profilePic: {
-            type: String,//URL
+            type: String//URL
         },
         bio: {
-            type: String,
+            type: String
         },
         linkedin:{
-            type: String,
+            type: String
         },
         created: {
             type: Date,
