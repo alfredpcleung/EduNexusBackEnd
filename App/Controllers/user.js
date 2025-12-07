@@ -1,21 +1,21 @@
 var UserModel = require('../Models/user');
 
 module.exports.create = async function (req, res, next) {
-
     try {
-        let newUser = new UserModel(req.body);
-        newUser.admin = false;
-        let result = await UserModel.create(newUser);
+        const userData = {
+            ...req.body,
+            admin: false
+        };
+        let result = await UserModel.create(userData);
         res.json(
             {
                 success: true,
                 message: "User created successfully."
             }
         );
-
     } catch (error) {
         console.log(error);
-        next(error)
+        next(error);
     }
 }
 
@@ -56,28 +56,20 @@ module.exports.SetUserByID = async function (req, res, next) {
 
 module.exports.update = async function (req, res, next) {
     try {
-        let userId = req.params.userID;
-        let updatedUser = UserModel(req.body);
-        updatedUser._id = userId;
-        updatedUser.admin = req.user.admin;
+        let result = await UserModel.findByIdAndUpdate(
+            req.params.id,
+            { $set: req.body },
+            { new: true, runValidators: true }
+        );
 
-        let result = await UserModel.updateOne({ _id: req.params.id }, updatedUser);
-
-        console.log(result);
-        if (result.modifiedCount > 0) {
-            res.json(
-                {
-                    success: true,
-                    message: "User updated successfully."
-                }
-            );
-        } else {
-            // Express will catch this on its own.
-            throw new Error('User not updated. Are you sure it exists?')
+        if (!result) {
+            return res.status(404).json({ success: false, message: "Not Found" });
         }
+
+        res.json({ success: true, data: result });
     } catch (error) {
         console.log(error);
-        next(error)
+        next(error);
     }
 }
 
@@ -92,12 +84,16 @@ module.exports.delete = async function (req, res, next) {
                 }
             );
         } else {
-            // Express will catch this on its own.
-            throw new Error('User not deleted. Are you sure it exists?')
+            res.json(
+                {
+                    success: false,
+                    message: "User not deleted. Are you sure it exists?"
+                }
+            );
         }
     } catch (error) {
         console.log(error);
-        next(error)
+        next(error);
     }
 }
 

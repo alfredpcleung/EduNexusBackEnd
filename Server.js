@@ -6,11 +6,11 @@ var configDb = require('./Config/db.js');
 var userRouter = require('./App/Routers/user.js');
 var courseRotuer = require('./App/Routers/course.js')
 //var authRouter = require("./App/Routers/auth.js");
-const firebaseAdmin = require("./Config/firebaseAdmin.js");
+//const firebaseAdmin = require("./Config/firebaseAdmin.js");
 
 var app = Express();
 configDb();
-firebaseAdmin();
+// firebaseAdmin();
 
 app.use(cors());
 app.use(logger('dev') );
@@ -29,11 +29,42 @@ app.use(function(req, res, next) {
 app.use(function(err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-  res.status(err.status || 500);
+  
+  let statusCode = err.status || 500;
+  let message = err.message;
+  
+  // Check if it's a Mongoose error by checking properties
+  const isMongooseValidationError = err.errors !== undefined || err.name === 'ValidationError';
+  
+  // Handle Mongoose validation errors
+  if (isMongooseValidationError || err.name === 'ValidationError') {
+    statusCode = 400;
+    if (err.errors) {
+      const errors = Object.values(err.errors).map(e => e.message || e);
+      message = errors.join(', ') || 'Validation failed';
+    }
+  }
+  
+  // Handle Mongoose cast errors (invalid ObjectId)
+  if (err.name === 'CastError' || err.kind === 'ObjectId') {
+    statusCode = 400;
+    message = 'Invalid ID format';
+  }
+  
+  // Handle Mongoose duplicate key errors
+  if (err.code === 11000 || err.message.includes('duplicate key')) {
+    statusCode = 400;
+    if (err.keyPattern) {
+      const fields = Object.keys(err.keyPattern);
+      message = `Duplicate value for field(s): ${fields.join(', ')}`;
+    }
+  }
+  
+  res.status(statusCode);
   res.json(
     {
       success: false,
-      message: err.message
+      message: message
     }
   );
 });

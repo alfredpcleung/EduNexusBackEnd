@@ -2,7 +2,13 @@ const firebase = require('firebase-admin');
 
 module.exports.requireSignin = function (req, res, next) {
 
-    let token = req.header('Authorization').substr(7);
+    let authHeader = req.header('Authorization');
+    
+    if (!authHeader) {
+        return next(new Error('Authorization header is missing'));
+    }
+
+    let token = authHeader.substr(7);
 
     firebase.auth().verifyIdToken(token, true)
         .then(decodedToken => {

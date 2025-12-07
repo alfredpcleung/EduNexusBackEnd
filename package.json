@@ -15,8 +15,9 @@
   "type": "commonjs",
   "main": "Server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "test": "jest --detectOpenHandles",
+    "test:watch": "jest --watch",
+    "start": "node Server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -29,5 +30,9 @@
     "mongoose": "^8.19.0",
     "morgan": "^1.10.1",
     "nodemon": "^3.1.10"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
   }
 }
