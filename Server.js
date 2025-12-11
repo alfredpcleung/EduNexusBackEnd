@@ -5,7 +5,10 @@ var logger = require('morgan');
 var configDb = require('./Config/db.js');
 var authRouter = require('./App/Routers/auth.js');
 var userRouter = require('./App/Routers/user.js');
-var courseRotuer = require('./App/Routers/course.js')
+var courseRotuer = require('./App/Routers/course.js');
+var projectRouter = require('./App/Routers/project.js');
+var feedbackRouter = require('./App/Routers/feedback.js');
+var dashboardRouter = require('./App/Routers/dashboard.js');
 //const firebaseAdmin = require("./Config/firebaseAdmin.js");
 
 var app = Express();
@@ -20,6 +23,9 @@ app.use(Express.urlencoded({ extended: false }));
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/courses', courseRotuer);
+app.use('/api/projects', projectRouter);
+app.use('/api/feedback', feedbackRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 app.use(function(req, res, next) {
   next(createError(404));
