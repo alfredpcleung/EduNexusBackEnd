@@ -1,15 +1,13 @@
 var Router = require("express").Router();
 
 var CourseController = require('../Controllers/course');
-var authController = require('../Controllers/firebaseAuth');
+var AuthMiddleware = require('../Controllers/authMiddleware');
+var OwnershipMiddleware = require('../Controllers/ownershipMiddleware');
 
 Router.get('/', CourseController.list);
-Router.post('/', CourseController.create);
-// Router.post('/', authController.requireSignin, CourseController.create);
+Router.post('/', AuthMiddleware.requireAuth, CourseController.create);
 Router.get('/:id', CourseController.inventoryByID);
-// Router.put('/:id',  authController.requireSignin, CourseController.hasAuthorization, CourseController.update);
-Router.put('/:id', CourseController.update);
-// Router.delete('/:id', authController.requireSignin, CourseController.hasAuthorization, CourseController.delete);
-Router.delete('/:id', CourseController.delete);
+Router.put('/:id', AuthMiddleware.requireAuth, OwnershipMiddleware.checkCourseOwnership, CourseController.update);
+Router.delete('/:id', AuthMiddleware.requireAuth, OwnershipMiddleware.checkCourseOwnership, CourseController.delete);
 
 module.exports = Router;

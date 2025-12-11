@@ -17,8 +17,8 @@ module.exports.create = async function (req, res, next) {
             newItem.tags = [];
         }
 
-        // Use owner from request body instead of req.auth
-        newItem.owner = req.body.owner || "Unknown";
+        // Set owner to the authenticated user's ID
+        newItem.owner = req.user.userId;
 
         let result = await CourseModel.create(newItem);
         res.json(result);

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const bcrypt = require('bcrypt');
 
 const UserSchema = new Schema(
   {
@@ -10,6 +11,11 @@ const UserSchema = new Schema(
       required: true, 
       unique: true, 
       match: [/.+\@.+\..+/, "Please fill a valid e-mail address"] 
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 6
     },
     role: { 
       type: String, 
@@ -27,11 +33,32 @@ const UserSchema = new Schema(
   { collection: "users" }
 );
 
+// Hash password before saving
+UserSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Method to compare passwords
+UserSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+
 UserSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
   transform: function (doc, ret) {
     delete ret._id;
+    delete ret.password; // Never return password in JSON
   }
 });
 
