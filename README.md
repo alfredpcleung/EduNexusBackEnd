@@ -107,7 +107,11 @@ npm test -- __tests__/auth.crud.test.js --verbose
 
 ## API Documentation
 
-### Base URL
+**For detailed API documentation with request/response examples and code snippets, see [FRONTEND_API_DOCUMENTATION.md](FRONTEND_API_DOCUMENTATION.md) - Frontend developers should refer to this document.**
+
+### Quick API Reference
+
+#### Base URL
 ```
 http://localhost:3000/api
 ```
@@ -256,11 +260,15 @@ Error Response Format:
 
 ## Frontend Integration
 
-Complete API documentation available in `FRONTEND_API_DOCUMENTATION.md` with:
-- Exact endpoint URLs
-- Request/response formats
-- Code examples
-- Error handling guidance
+**Complete API documentation with exact request/response formats and code examples available in [FRONTEND_API_DOCUMENTATION.md](FRONTEND_API_DOCUMENTATION.md)** with:
+- Exact endpoint URLs and methods
+- Request/response formats with JSON examples
+- Authorization header format
+- Token management code examples
+- Authenticated request helper functions
+- Frontend implementation checklist
+
+Share this file with your frontend team!
 
 ## Testing Coverage
 
