@@ -43,9 +43,9 @@ module.exports.read = async function (req, res, next) {
     res.json(req.user);
 }
 
-module.exports.SetUserByID = async function (req, res, next) {
+module.exports.SetUserByUID = async function (req, res, next) {
     try {
-        req.user = await UserModel.findOne({ _id: req.params.id }, '-hashed_password -salt');
+        req.user = await UserModel.findOne({ uid: req.params.uid }, '-hashed_password -salt');
         next();
     } catch (error) {
         console.log(error);
@@ -56,8 +56,8 @@ module.exports.SetUserByID = async function (req, res, next) {
 
 module.exports.update = async function (req, res, next) {
     try {
-        let result = await UserModel.findByIdAndUpdate(
-            req.params.id,
+        let result = await UserModel.findOneAndUpdate(
+            { uid: req.params.uid },
             { $set: req.body },
             { new: true, runValidators: true }
         );
@@ -75,7 +75,7 @@ module.exports.update = async function (req, res, next) {
 
 module.exports.delete = async function (req, res, next) {
     try {
-        let result = await UserModel.deleteOne({ _id: req.params.id });
+        let result = await UserModel.deleteOne({ uid: req.params.uid });
         if (result.deletedCount > 0) {
             res.json(
                 {

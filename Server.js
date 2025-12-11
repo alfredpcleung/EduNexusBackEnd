@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 var Express = require("express");
 var cors = require('cors');
 var createError = require('http-errors');

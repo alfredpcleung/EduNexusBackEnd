@@ -1,6 +1,14 @@
 const jwt = require('jsonwebtoken');
 const UserModel = require('../Models/user');
 
+// Debug: Check if JWT_SECRET is loaded
+if (!process.env.JWT_SECRET) {
+    console.error('⚠️  WARNING: JWT_SECRET is not defined in environment!');
+    console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('JWT') || k.includes('ATLAS')));
+} else {
+    console.log('✅ JWT_SECRET is loaded successfully');
+}
+
 // Sign Up - Create a new user
 module.exports.signup = async function (req, res, next) {
     try {

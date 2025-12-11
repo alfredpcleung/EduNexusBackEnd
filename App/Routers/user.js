@@ -8,13 +8,13 @@ Router.put('/setadmin/:userID',
     AuthMiddleware.requireAuth,
     UserController.setAdmin);
 
-Router.get('/:id', 
-    UserController.SetUserByID,
+Router.get('/:uid', 
+    UserController.SetUserByUID,
     UserController.read);
-Router.put('/:id', 
+Router.put('/:uid', 
     AuthMiddleware.requireAuth,
     UserController.update);
-Router.delete('/:id', 
+Router.delete('/:uid', 
     AuthMiddleware.requireAuth,
     UserController.delete);
 
