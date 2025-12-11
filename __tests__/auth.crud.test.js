@@ -57,11 +57,11 @@ describe('Authentication & CRUD Tests', () => {
       const res = await request(app)
         .post('/api/auth/signup')
         .send({
-          uid: testUid,
           displayName: 'Test User',
           email: testEmail,
           password: testPassword,
           role: 'student'
+          // uid is optional - will be auto-generated
         });
 
       expect(res.status).toBe(201);
@@ -70,6 +70,7 @@ describe('Authentication & CRUD Tests', () => {
       expect(res.body.user.displayName).toBe('Test User');
       expect(res.body.user.email).toBe(testEmail);
       expect(res.body.user.role).toBe('student');
+      expect(res.body.user.uid).toBeDefined(); // Verify uid was auto-generated
 
       // Store token and userId for later tests
       authToken = res.body.token;
@@ -83,7 +84,6 @@ describe('Authentication & CRUD Tests', () => {
       const res = await request(app)
         .post('/api/auth/signup')
         .send({
-          uid: 'test_uid_2',
           displayName: 'Test User'
           // missing email and password
         });
@@ -97,10 +97,10 @@ describe('Authentication & CRUD Tests', () => {
       const res = await request(app)
         .post('/api/auth/signup')
         .send({
-          uid: 'different_uid',
           displayName: 'Another User',
           email: testEmail, // Same email as first test
           password: testPassword
+          // uid is optional
         });
 
       expect(res.status).toBe(400);
@@ -305,10 +305,10 @@ describe('Authentication & CRUD Tests', () => {
       const newUserRes = await request(app)
         .post('/api/auth/signup')
         .send({
-          uid: 'other_uid_' + Date.now(),
           displayName: 'Other User',
           email: newUserEmail,
           password: 'OtherPassword123'
+          // uid is optional - will be auto-generated
         });
 
       const otherUserToken = newUserRes.body.token;
@@ -340,10 +340,10 @@ describe('Authentication & CRUD Tests', () => {
       const newUserRes = await request(app)
         .post('/api/auth/signup')
         .send({
-          uid: 'delete_uid_' + Date.now(),
           displayName: 'Delete Test User',
           email: newUserEmail,
           password: 'DeletePassword123'
+          // uid is optional - will be auto-generated
         });
 
       const otherUserToken = newUserRes.body.token;

@@ -4,7 +4,11 @@ const bcrypt = require('bcrypt');
 
 const UserSchema = new Schema(
   {
-    uid: { type: String, required: true, unique: true },        // Unique identifier
+    uid: { 
+      type: String, 
+      unique: true,
+      default: () => `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    },
     displayName: { type: String, required: true },              // Full name
     email: { 
       type: String, 

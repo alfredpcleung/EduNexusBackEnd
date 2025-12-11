@@ -6,26 +6,28 @@ module.exports.signup = async function (req, res, next) {
     try {
         const { uid, displayName, email, password, role } = req.body;
 
-        // Validate required fields
-        if (!uid || !displayName || !email || !password) {
+        // Validate required fields (uid is now optional - auto-generated)
+        if (!displayName || !email || !password) {
             return res.status(400).json({
                 success: false,
-                message: "Missing required fields: uid, displayName, email, password"
+                message: "Missing required fields: displayName, email, password"
             });
         }
 
-        // Check if user already exists
-        const existingUser = await UserModel.findOne({ $or: [{ uid }, { email }] });
+        // Check if user already exists (only by email if uid is not provided)
+        const existingUser = await UserModel.findOne({ 
+            $or: uid ? [{ uid }, { email }] : [{ email }]
+        });
         if (existingUser) {
             return res.status(400).json({
                 success: false,
-                message: "User with this uid or email already exists"
+                message: "User with this email already exists"
             });
         }
 
-        // Create new user
+        // Create new user (uid will be auto-generated if not provided)
         const newUser = new UserModel({
-            uid,
+            uid: uid || undefined, // Let the model generate it if not provided
             displayName,
             email,
             password,
@@ -54,7 +56,8 @@ module.exports.signup = async function (req, res, next) {
             user: {
                 displayName: newUser.displayName,
                 email: newUser.email,
-                role: newUser.role
+                role: newUser.role,
+                uid: newUser.uid
             }
         });
 

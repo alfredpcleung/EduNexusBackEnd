@@ -19,13 +19,14 @@ https://your-render-url/api  (Production)
 **Request Body:**
 ```json
 {
-  "uid": "unique_user_id",
   "displayName": "John Doe",
   "email": "john@example.com",
   "password": "securepassword123",
   "role": "student"  // Optional: "student", "instructor", or "admin" (default: "student")
 }
 ```
+
+**Note:** The `uid` field is optional and will be auto-generated if not provided.
 
 **Success Response (201):**
 ```json
@@ -36,7 +37,8 @@ https://your-render-url/api  (Production)
   "user": {
     "displayName": "John Doe",
     "email": "john@example.com",
-    "role": "student"
+    "role": "student",
+    "uid": "user_1702310400123_a1b2c3d4e"
   }
 }
 ```
@@ -460,7 +462,7 @@ Authorization: Bearer <token>
 
 ## Frontend Checklist
 
-- [ ] Implement Sign Up form with fields: uid, displayName, email, password
+- [ ] Implement Sign Up form with fields: displayName, email, password (uid is auto-generated)
 - [ ] Implement Sign In form with fields: email, password
 - [ ] Store token in localStorage after successful auth
 - [ ] Create utility function to add Authorization header to requests
@@ -469,24 +471,26 @@ Authorization: Bearer <token>
 - [ ] Protect course creation form (only authenticated users)
 - [ ] Implement course ownership check (only owner can edit/delete)
 - [ ] Add error handling for 401 (unauthorized) responses
-- [ ] Display user data (displayName, role, email) after login
+- [ ] Display user data (displayName, role, email, uid) after login
 - [ ] Test signup → login → create course flow
 
 ---
 
 ## Quick Implementation Example
 
-### Signup
+### Signup (uid auto-generated)
 ```javascript
-async function signup(uid, displayName, email, password) {
+async function signup(displayName, email, password) {
   const response = await fetch('http://localhost:3000/api/auth/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ uid, displayName, email, password })
+    body: JSON.stringify({ displayName, email, password })
+    // Note: uid is optional and will be auto-generated
   });
   const data = await response.json();
   if (data.token) {
     localStorage.setItem('authToken', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user)); // Store user info
   }
   return data;
 }
@@ -503,6 +507,7 @@ async function signin(email, password) {
   const data = await response.json();
   if (data.token) {
     localStorage.setItem('authToken', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user)); // Store user info
   }
   return data;
 }
