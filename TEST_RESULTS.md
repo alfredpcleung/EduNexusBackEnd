@@ -10,16 +10,17 @@
 ## Test Summary
 
 ### 1. Authentication - Sign Up (3/3 ✅)
-- ✅ Successfully sign up a new user with all required fields
-- ✅ Fail signup when missing required fields (uid, displayName, email, password)
+- ✅ Successfully sign up a new user with only required fields (displayName, email, password)
+- ✅ Fail signup when missing required fields (displayName, email, password)
 - ✅ Fail signup when attempting to register with duplicate email
 
 **What's Tested:**
 - User registration with proper validation
-- Duplicate email/uid prevention
+- Duplicate email prevention
 - Password hashing on save
 - JWT token generation on signup
-- User data returned in response (displayName, email, role)
+- User data returned in response (displayName, email, role, uid)
+- **Auto-generated uid** - Users no longer need to provide a uid; it's automatically generated as `user_<timestamp>_<random-string>`
 
 ---
 
