@@ -50,8 +50,8 @@ describe('Dashboard Controller Tests', () => {
         password: 'password123'
       });
 
-    token1 = signup1.body.token;
-    user1Uid = signup1.body.user.uid;
+    token1 = signup1.body.data.token;
+    user1Uid = signup1.body.data.user.uid;
 
     // Create test user 2 (will own projects for user1 to feedback on)
     const signup2 = await request(app)
@@ -62,8 +62,8 @@ describe('Dashboard Controller Tests', () => {
         password: 'password456'
       });
 
-    token2 = signup2.body.token;
-    user2Uid = signup2.body.user.uid;
+    token2 = signup2.body.data.token;
+    user2Uid = signup2.body.data.user.uid;
 
     // User 1: Create 2 courses
     const course1Res = await request(app)
@@ -76,7 +76,7 @@ describe('Dashboard Controller Tests', () => {
         instructor: 'User 1'
       });
 
-    courseId1 = course1Res.body._id;
+    courseId1 = course1Res.body.data._id;
 
     const course2Res = await request(app)
       .post('/courses')
@@ -88,7 +88,7 @@ describe('Dashboard Controller Tests', () => {
         instructor: 'User 1'
       });
 
-    courseId2 = course2Res.body._id;
+    courseId2 = course2Res.body.data._id;
 
     // User 1: Create 2 projects
     const project1Res = await request(app)
@@ -101,7 +101,7 @@ describe('Dashboard Controller Tests', () => {
         tags: ['frontend', 'react']
       });
 
-    projectId1 = project1Res.body.project._id;
+    projectId1 = project1Res.body.data.project._id;
 
     const project2Res = await request(app)
       .post('/projects')
@@ -113,7 +113,7 @@ describe('Dashboard Controller Tests', () => {
         tags: ['python', 'pandas']
       });
 
-    projectId2 = project2Res.body.project._id;
+    projectId2 = project2Res.body.data.project._id;
 
     // User 2: Create project for user1 to feedback on
     const project3Res = await request(app)
@@ -124,7 +124,7 @@ describe('Dashboard Controller Tests', () => {
         description: 'Another project'
       });
 
-    const projectId3 = project3Res.body.project._id;
+    const projectId3 = project3Res.body.data.project._id;
 
     // User 1: Provide feedback on User 2's project
     const feedbackRes = await request(app)
@@ -136,7 +136,7 @@ describe('Dashboard Controller Tests', () => {
         comment: 'Great work!'
       });
 
-    feedbackId1 = feedbackRes.body.feedback._id;
+    feedbackId1 = feedbackRes.body.data._id;
   });
 
   afterAll(async () => {
@@ -477,7 +477,7 @@ describe('Dashboard Controller Tests', () => {
         .post('/feedback')
         .set('Authorization', `Bearer ${token2}`)
         .send({
-          projectId: projectRes.body.project._id,
+          projectId: projectRes.body.data.project._id,
           rating: 5,
           comment: 'Excellent!'
         });
@@ -572,7 +572,7 @@ describe('Dashboard Controller Tests', () => {
 
       const res = await request(app)
         .get('/dashboard/me')
-        .set('Authorization', `Bearer ${newUser.body.token}`);
+        .set('Authorization', `Bearer ${newUser.body.data.token}`);
 
       expect(res.status).toBe(200);
       expect(res.body.dashboard.ownedCourses.count).toBe(0);
@@ -590,7 +590,7 @@ describe('Dashboard Controller Tests', () => {
 
       const res = await request(app)
         .get('/dashboard/me')
-        .set('Authorization', `Bearer ${newUser.body.token}`);
+        .set('Authorization', `Bearer ${newUser.body.data.token}`);
 
       expect(res.status).toBe(200);
       expect(res.body.dashboard.ownedProjects.count).toBe(0);
@@ -608,7 +608,7 @@ describe('Dashboard Controller Tests', () => {
 
       const res = await request(app)
         .get('/dashboard/me')
-        .set('Authorization', `Bearer ${newUser.body.token}`);
+        .set('Authorization', `Bearer ${newUser.body.data.token}`);
 
       expect(res.status).toBe(200);
       expect(res.body.dashboard.authoredFeedback.count).toBe(0);
@@ -626,7 +626,7 @@ describe('Dashboard Controller Tests', () => {
 
       const res = await request(app)
         .get('/dashboard/me')
-        .set('Authorization', `Bearer ${newUser.body.token}`);
+        .set('Authorization', `Bearer ${newUser.body.data.token}`);
 
       expect(res.status).toBe(200);
       const dashboard = res.body.dashboard;
@@ -634,7 +634,7 @@ describe('Dashboard Controller Tests', () => {
       expect(dashboard.ownedCourses.count).toBe(0);
       expect(dashboard.ownedProjects.count).toBe(0);
       expect(dashboard.authoredFeedback.count).toBe(0);
-      expect(dashboard.user.uid).toBe(newUser.body.user.uid);
+      expect(dashboard.user.uid).toBe(newUser.body.data.user.uid);
     });
   });
 });

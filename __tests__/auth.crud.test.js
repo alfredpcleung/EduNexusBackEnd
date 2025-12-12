@@ -245,7 +245,7 @@ describe('Authentication & CRUD Tests', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data._id).toBe(courseId);
       expect(res.body.data.title).toBe('Advanced JavaScript');
-      expect(res.body.data.owner).toBe(testUserId);
+      expect(res.body.data.owner).toBe(testUid);
     });
 
     test('Should fail to get non-existent course', async () => {
@@ -311,7 +311,7 @@ describe('Authentication & CRUD Tests', () => {
           // uid is optional - will be auto-generated
         });
 
-      const otherUserToken = newUserRes.body.token;
+      const otherUserToken = newUserRes.body.data.token;
 
       const updateRes = await request(app)
         .put(`/api/courses/${courseId}`)
@@ -346,7 +346,7 @@ describe('Authentication & CRUD Tests', () => {
           // uid is optional - will be auto-generated
         });
 
-      const otherUserToken = newUserRes.body.token;
+      const otherUserToken = newUserRes.body.data.token;
 
       const deleteRes = await request(app)
         .delete(`/api/courses/${courseId}`)

@@ -331,10 +331,10 @@ describe('Project Controller Tests', () => {
       const res2 = await request(app)
         .get(`/projects/${projectId2}`);
 
-      expect(res1.body.project._id.toString()).toBe(projectId1.toString());
-      expect(res2.body.project._id.toString()).toBe(projectId2.toString());
-      expect(res1.body.project.owner).toBe(user1Uid);
-      expect(res2.body.project.owner).toBe(user2Uid);
+      expect(res1.body.data._id.toString()).toBe(projectId1.toString());
+      expect(res2.body.data._id.toString()).toBe(projectId2.toString());
+      expect(res1.body.data.owner).toBe(user1Uid);
+      expect(res2.body.data.owner).toBe(user2Uid);
     });
   });
 
@@ -388,7 +388,7 @@ describe('Project Controller Tests', () => {
       const getRes = await request(app)
         .get(`/projects/${projectId1}`);
 
-      const originalUpdated = getRes.body.project.updated;
+      const originalUpdated = getRes.body.data.updated;
 
       // Wait a bit to ensure timestamp difference
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -400,7 +400,7 @@ describe('Project Controller Tests', () => {
           title: 'Another Update'
         });
 
-      expect(new Date(updateRes.body.project.updated) > new Date(originalUpdated)).toBe(true);
+      expect(new Date(updateRes.body.data.updated) > new Date(originalUpdated)).toBe(true);
     });
 
     test('should prevent non-owner from updating', async () => {
@@ -448,7 +448,7 @@ describe('Project Controller Tests', () => {
         });
 
       expect(res.status).toBe(200);
-      expect(res.body.project.status).toBe('draft');
+      expect(res.body.data.status).toBe('draft');
     });
 
     test('should not allow owner field to be updated', async () => {
@@ -461,7 +461,7 @@ describe('Project Controller Tests', () => {
 
       // Owner should remain unchanged
       expect(res.status).toBe(200);
-      expect(res.body.project.owner).toBe(user1Uid);
+      expect(res.body.data.owner).toBe(user1Uid);
     });
   });
 
@@ -478,7 +478,7 @@ describe('Project Controller Tests', () => {
           description: 'Will be deleted'
         });
 
-      const projectIdToDelete = createRes.body.project._id;
+      const projectIdToDelete = createRes.body.data.project._id;
 
       // Verify it exists
       const getRes = await request(app)
@@ -546,7 +546,7 @@ describe('Project Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.project.title).toBe('Trimmed Title');
+      expect(res.body.data.title).toBe('Trimmed Title');
     });
 
     test('should accept empty description', async () => {
@@ -559,7 +559,7 @@ describe('Project Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.project.description).toBe('');
+      expect(res.body.data.description).toBe('');
     });
 
     test('should accept special characters in title', async () => {
@@ -572,15 +572,15 @@ describe('Project Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.project.title).toContain('#');
-      expect(res.body.project.title).toContain('"');
+      expect(res.body.data.title).toContain('#');
+      expect(res.body.data.title).toContain('"');
     });
 
     test('should not modify created timestamp on update', async () => {
       const getRes = await request(app)
         .get(`/projects/${projectId1}`);
 
-      const originalCreated = getRes.body.project.created;
+      const originalCreated = getRes.body.data.created;
 
       await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -591,7 +591,7 @@ describe('Project Controller Tests', () => {
           description: 'Modified'
         });
 
-      expect(updateRes.body.project.created).toBe(originalCreated);
+      expect(updateRes.body.data.created).toBe(originalCreated);
     });
 
     test('should accept tags as array', async () => {
@@ -604,8 +604,8 @@ describe('Project Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(Array.isArray(res.body.project.tags)).toBe(true);
-      expect(res.body.project.tags).toEqual(['tag1', 'tag2', 'tag3']);
+      expect(Array.isArray(res.body.data.tags)).toBe(true);
+      expect(res.body.data.tags).toEqual(['tag1', 'tag2', 'tag3']);
     });
 
     test('should handle all valid status values', async () => {
@@ -621,7 +621,7 @@ describe('Project Controller Tests', () => {
           });
 
         expect(res.status).toBe(201);
-        expect(res.body.project.status).toBe(status);
+        expect(res.body.data.status).toBe(status);
       }
     });
   });

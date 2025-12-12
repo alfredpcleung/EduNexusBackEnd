@@ -29,31 +29,29 @@ exports.getDashboard = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: {
-        dashboard: {
-          user: {
-            uid: user.uid,
-            displayName: user.displayName,
-            email: user.email,
-            role: user.role,
-            profilePic: user.profilePic,
-            bio: user.bio,
-            linkedin: user.linkedin,
-            created: user.created,
-            updated: user.updated
-          },
-          ownedCourses: {
-            count: ownedCourses.length,
-            courses: ownedCourses
-          },
-          ownedProjects: {
-            count: ownedProjects.length,
-            projects: ownedProjects
-          },
-          authoredFeedback: {
-            count: authoredFeedback.length,
-            feedback: authoredFeedback
-          }
+      dashboard: {
+        user: {
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          role: user.role,
+          profilePic: user.profilePic,
+          bio: user.bio,
+          linkedin: user.linkedin,
+          created: user.created,
+          updated: user.updated
+        },
+        ownedCourses: {
+          count: ownedCourses.length,
+          courses: ownedCourses
+        },
+        ownedProjects: {
+          count: ownedProjects.length,
+          projects: ownedProjects
+        },
+        authoredFeedback: {
+          count: authoredFeedback.length,
+          feedback: authoredFeedback
         }
       }
     });

@@ -5,9 +5,10 @@
  * Usage: errorResponse(res, 400, "Missing required fields")
  */
 
-module.exports = (res, statusCode, message) => {
+module.exports = (res, statusCode, message, data = null) => {
   res.status(statusCode).json({
-    success: false,
-    message: message
+    success: statusCode < 400,
+    message: message,
+    data: data
   });
 };

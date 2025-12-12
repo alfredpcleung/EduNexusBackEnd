@@ -63,11 +63,11 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.token).toBeDefined();
-      expect(res.body.user.uid).toBeDefined();
+      expect(res.body.data.token).toBeDefined();
+      expect(res.body.data.user.uid).toBeDefined();
 
-      token1 = res.body.token;
-      user1Uid = res.body.user.uid;
+      token1 = res.body.data.token;
+      user1Uid = res.body.data.user.uid;
     });
 
     test('Should signup user 2', async () => {
@@ -82,8 +82,8 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
 
-      token2 = res.body.token;
-      user2Uid = res.body.user.uid;
+      token2 = res.body.data.token;
+      user2Uid = res.body.data.user.uid;
     });
 
     test('Should create course owned by user 1', async () => {
@@ -97,10 +97,11 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
           instructor: 'Alice'
         });
 
-      expect(res.status).toBe(200);
-      expect(res.body._id).toBeDefined();
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data._id).toBeDefined();
 
-      courseId = res.body._id;
+      courseId = res.body.data._id;
     });
   });
 
@@ -121,11 +122,11 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.project.title).toBe('Portfolio Project');
-      expect(res.body.project.owner).toBe(user1Uid);
-      expect(res.body.project.status).toBe('active');
+      expect(res.body.data.project.title).toBe('Portfolio Project');
+      expect(res.body.data.project.owner).toBe(user1Uid);
+      expect(res.body.data.project.status).toBe('active');
 
-      projectId = res.body.project._id;
+      projectId = res.body.data.project._id;
     });
 
     test('Should fail to create project without authentication', async () => {
@@ -161,8 +162,8 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.projects)).toBe(true);
-      expect(res.body.projects.length).toBeGreaterThan(0);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
     });
 
     test('Should filter projects by courseId', async () => {
@@ -171,8 +172,8 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      if (res.body.projects.length > 0) {
-        expect(res.body.projects[0].courseId).toBe(courseId);
+      if (res.body.data.length > 0) {
+        expect(res.body.data[0].courseId).toBe(courseId);
       }
     });
 
@@ -182,7 +183,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.projects[0].owner).toBe(user1Uid);
+      expect(res.body.data[0].owner).toBe(user1Uid);
     });
 
     test('Should get single project', async () => {
@@ -191,7 +192,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.project._id).toBe(projectId);
+      expect(res.body.data._id).toBe(projectId.toString());
     });
 
     test('Should fail to get non-existent project', async () => {
@@ -213,8 +214,8 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.project.title).toBe('Updated Portfolio Project');
-      expect(res.body.project.status).toBe('archived');
+      expect(res.body.data.title).toBe('Updated Portfolio Project');
+      expect(res.body.data.status).toBe('archived');
     });
 
     test('Should fail to update project as non-owner', async () => {
@@ -266,11 +267,11 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.feedback.rating).toBe(4);
-      expect(res.body.feedback.comment).toBe('Great project!');
-      expect(res.body.feedback.authorId).toBe(user2Uid);
+      expect(res.body.data.rating).toBe(4);
+      expect(res.body.data.comment).toBe('Great project!');
+      expect(res.body.data.authorId).toBe(user2Uid);
 
-      feedbackId = res.body.feedback._id;
+      feedbackId = res.body.data._id;
     });
 
     test('Should fail to create feedback without authentication', async () => {
@@ -332,8 +333,8 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.feedback)).toBe(true);
-      expect(res.body.feedback.length).toBeGreaterThan(0);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
     });
 
     test('Should require projectId query parameter', async () => {
@@ -349,7 +350,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
         .get(`/feedback?projectId=${projectId}&authorId=${user2Uid}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.feedback[0].authorId).toBe(user2Uid);
+      expect(res.body.data[0].authorId).toBe(user2Uid);
     });
 
     test('Should update feedback as author', async () => {
@@ -363,8 +364,8 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.feedback.rating).toBe(5);
-      expect(res.body.feedback.comment).toBe('Even better!');
+      expect(res.body.data.rating).toBe(5);
+      expect(res.body.data.comment).toBe('Even better!');
     });
 
     test('Should fail to update feedback as non-author', async () => {
@@ -432,7 +433,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
       expect(res.body.dashboard.user.uid).toBe(user1Uid);
       expect(res.body.dashboard.user.displayName).toBe('Alice');
       expect(res.body.dashboard.ownedProjects.count).toBeGreaterThan(0);
-      expect(res.body.dashboard.ownedProjects.projects[0]._id.toString()).toBe(projectId);
+      expect(res.body.dashboard.ownedProjects.projects[0]._id.toString()).toBe(projectId.toString());
     });
 
     test('Should get dashboard for user 2 (feedback author)', async () => {
@@ -515,7 +516,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
         });
 
       const deleteRes = await request(app)
-        .delete(`/projects/${createRes.body.project._id}`)
+        .delete(`/projects/${createRes.body.data.project._id}`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(deleteRes.status).toBe(200);
@@ -548,7 +549,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
           });
 
         expect(res.status).toBe(201);
-        expect(res.body.project.status).toBe(status);
+        expect(res.body.data.status).toBe(status);
       }
     });
 
@@ -561,7 +562,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
           title: 'Rating Test Project'
         });
 
-      const newProjectId = projectRes.body.project._id;
+      const newProjectId = projectRes.body.data.project._id;
 
       // Test boundary values - each with different user
       const validRatings = [1, 2, 3, 4, 5];
@@ -577,7 +578,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
             password: 'password123'
           });
 
-        const userToken = newUserRes.body.token;
+        const userToken = newUserRes.body.data.token;
 
         const res = await request(app)
           .post('/feedback')
@@ -600,7 +601,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
           title: 'Unique Feedback Test'
         });
 
-      const newProjectId = projectRes.body.project._id;
+      const newProjectId = projectRes.body.data.project._id;
 
       // First feedback should succeed
       const res1 = await request(app)
@@ -630,7 +631,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
         .get('/feedback?projectId=507f1f77bcf86cd799439011');
 
       expect(res.status).toBe(200);
-      expect(res.body.feedback).toEqual([]);
+      expect(res.body.data).toEqual([]);
     });
   });
 });

@@ -85,10 +85,11 @@ describe('User Controller', () => {
 
   describe('GET /api/users/:id - Get User by ID', () => {
     it('should return user by id', async () => {
+      const uniqueUid = 'user_' + Date.now();
       const user = {
-        uid: 'user123',
+        uid: uniqueUid,
         displayName: 'John Doe',
-        email: 'john@example.com',
+        email: 'john' + Date.now() + '@example.com',
         role: 'student',
       };
 
@@ -96,8 +97,8 @@ describe('User Controller', () => {
         .post('/api/users')
         .send(user);
 
-      const createdUser = await UserModel.findOne({ uid: 'user123' });
-      userId = createdUser._id;
+      expect(createRes.status).toBe(201);
+      userId = uniqueUid;
 
       const res = await request(app)
         .get(`/api/users/${userId}`)
@@ -105,14 +106,14 @@ describe('User Controller', () => {
 
       expect(res.body.success).toBe(true);
       expect(res.body.data.displayName).toBe('John Doe');
-      expect(res.body.data.email).toBe('john@example.com');
+      expect(res.body.data.email).toBe(user.email);
     });
 
     it('should return 404 for non-existent user', async () => {
-      const fakeId = new mongoose.Types.ObjectId();
+      const fakeUid = 'non_existent_uid_' + Date.now();
 
       const res = await request(app)
-        .get(`/api/users/${fakeId}`)
+        .get(`/api/users/${fakeUid}`)
         .expect(404);
 
       expect(res.body.success).toBe(false);
@@ -121,17 +122,18 @@ describe('User Controller', () => {
 
   describe('PUT /api/users/:id - Update User', () => {
     beforeEach(async () => {
+      const uniqueUid = 'user_' + Date.now() + '_update';
       const user = {
-        uid: 'user123',
+        uid: uniqueUid,
         displayName: 'John Doe',
-        email: 'john@example.com',
+        email: 'john' + Date.now() + '_update@example.com',
         role: 'student',
         bio: 'Original bio',
       };
 
-      await request(app).post('/api/users').send(user);
-      const createdUser = await UserModel.findOne({ uid: 'user123' });
-      userId = createdUser._id;
+      const createRes = await request(app).post('/api/users').send(user);
+      expect(createRes.status).toBe(201);
+      userId = uniqueUid;
     });
 
     it('should update user with valid data', async () => {
@@ -181,16 +183,17 @@ describe('User Controller', () => {
 
   describe('DELETE /api/users/:id - Delete User', () => {
     beforeEach(async () => {
+      const uniqueUid = 'user_' + Date.now() + '_delete';
       const user = {
-        uid: 'user123',
+        uid: uniqueUid,
         displayName: 'John Doe',
-        email: 'john@example.com',
+        email: 'john' + Date.now() + '_delete@example.com',
         role: 'student',
       };
 
-      await request(app).post('/api/users').send(user);
-      const createdUser = await UserModel.findOne({ uid: 'user123' });
-      userId = createdUser._id;
+      const createRes = await request(app).post('/api/users').send(user);
+      expect(createRes.status).toBe(201);
+      userId = uniqueUid;
     });
 
     it('should delete user successfully', async () => {
@@ -199,22 +202,21 @@ describe('User Controller', () => {
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.message).toContain('deleted successfully');
+      expect(res.body.data.message).toContain('deleted successfully');
 
       // Verify user is deleted
-      const deletedUser = await UserModel.findById(userId);
+      const deletedUser = await UserModel.findOne({ uid: userId });
       expect(deletedUser).toBeNull();
     });
 
     it('should return 404 when deleting non-existent user', async () => {
-      const fakeId = new mongoose.Types.ObjectId();
+      const fakeUid = 'non_existent_uid_' + Date.now();
 
       const res = await request(app)
-        .delete(`/api/users/${fakeId}`)
-        .expect(200);
+        .delete(`/api/users/${fakeUid}`)
+        .expect(404);
 
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('not deleted');
     });
   });
 });

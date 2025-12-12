@@ -116,16 +116,16 @@ describe('Feedback Controller Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.feedback).toBeDefined();
-      expect(res.body.feedback.projectId).toBe(projectId1);
-      expect(res.body.feedback.rating).toBe(5);
-      expect(res.body.feedback.comment).toBe('Excellent work!');
-      expect(res.body.feedback.authorId).toBe(user1Uid);
-      expect(res.body.feedback._id).toBeDefined();
-      expect(res.body.feedback.created).toBeDefined();
-      expect(res.body.feedback.updated).toBeDefined();
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data.projectId).toBe(projectId1.toString());
+      expect(res.body.data.rating).toBe(5);
+      expect(res.body.data.comment).toBe('Excellent work!');
+      expect(res.body.data.authorId).toBe(user1Uid);
+      expect(res.body.data._id).toBeDefined();
+      expect(res.body.data.created).toBeDefined();
+      expect(res.body.data.updated).toBeDefined();
 
-      feedbackId1 = res.body.feedback._id;
+      feedbackId1 = res.body.data._id;
     });
 
     test('should set authorId to authenticated user uid', async () => {
@@ -139,8 +139,8 @@ describe('Feedback Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.feedback.authorId).toBe(user3Uid);
-      expect(res.body.feedback.authorId).not.toBe(user1Uid);
+      expect(res.body.data.authorId).toBe(user3Uid);
+      expect(res.body.data.authorId).not.toBe(user1Uid);
     });
 
     test('should accept optional comment', async () => {
@@ -153,8 +153,8 @@ describe('Feedback Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.feedback.rating).toBe(3);
-      expect(res.body.feedback.comment).toBe('');
+      expect(res.body.data.rating).toBe(3);
+      expect(res.body.data.comment).toBe('');
     });
 
     test('should accept all valid rating values (1-5)', async () => {
@@ -171,7 +171,7 @@ describe('Feedback Controller Tests', () => {
 
         const res = await request(app)
           .post('/feedback')
-          .set('Authorization', `Bearer ${newUser.body.token}`)
+          .set('Authorization', `Bearer ${newUser.body.data.token}`)
           .send({
             projectId: projectId2,
             rating: rating,
@@ -179,7 +179,7 @@ describe('Feedback Controller Tests', () => {
           });
 
         expect(res.status).toBe(201);
-        expect(res.body.feedback.rating).toBe(rating);
+        expect(res.body.data.rating).toBe(rating);
       }
     });
 
@@ -211,7 +211,7 @@ describe('Feedback Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.feedback.authorId).toBe(user2Uid);
+      expect(res.body.data.authorId).toBe(user2Uid);
     });
 
     test('should fail without authentication', async () => {
@@ -294,7 +294,7 @@ describe('Feedback Controller Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.feedback)).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
       expect(res.body.count).toBeGreaterThan(0);
     });
 
@@ -302,7 +302,7 @@ describe('Feedback Controller Tests', () => {
       const res = await request(app)
         .get(`/feedback?projectId=${projectId1}`);
 
-      const foundFeedback = res.body.feedback.find(
+      const foundFeedback = res.body.data.find(
         f => f._id.toString() === feedbackId1.toString()
       );
 
@@ -318,8 +318,8 @@ describe('Feedback Controller Tests', () => {
 
       expect(res.status).toBe(200);
       
-      res.body.feedback.forEach(feedback => {
-        expect(feedback.projectId).toBe(projectId1);
+      res.body.data.forEach(feedback => {
+        expect(feedback.projectId.toString()).toBe(projectId1.toString());
       });
     });
 
@@ -328,9 +328,9 @@ describe('Feedback Controller Tests', () => {
         .get(`/feedback?projectId=${projectId1}&authorId=${user1Uid}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.feedback.length).toBeGreaterThan(0);
+      expect(res.body.data.length).toBeGreaterThan(0);
       
-      res.body.feedback.forEach(feedback => {
+      res.body.data.forEach(feedback => {
         expect(feedback.authorId).toBe(user1Uid);
       });
     });
@@ -354,13 +354,13 @@ describe('Feedback Controller Tests', () => {
           description: 'Will have no feedback'
         });
 
-      const projectId = projectRes.body.project._id;
+      const projectId = projectRes.body.data.project._id;
 
       const res = await request(app)
         .get(`/feedback?projectId=${projectId}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.feedback).toEqual([]);
+      expect(res.body.data).toEqual([]);
       expect(res.body.count).toBe(0);
     });
 
@@ -377,7 +377,7 @@ describe('Feedback Controller Tests', () => {
         .get(`/feedback?projectId=${projectId1}`);
 
       expect(res.status).toBe(200);
-      const feedback = res.body.feedback[0];
+      const feedback = res.body.data[0];
 
       expect(feedback).toHaveProperty('_id');
       expect(feedback).toHaveProperty('projectId');
@@ -403,8 +403,8 @@ describe('Feedback Controller Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.feedback.rating).toBe(4);
-      expect(res.body.feedback.comment).toBe('Updated comment');
+      expect(res.body.data.rating).toBe(4);
+      expect(res.body.data.comment).toBe('Updated comment');
     });
 
     test('should allow updating only rating', async () => {
@@ -416,8 +416,8 @@ describe('Feedback Controller Tests', () => {
         });
 
       expect(res.status).toBe(200);
-      expect(res.body.feedback.rating).toBe(3);
-      expect(res.body.feedback.comment).toBe('Updated comment');
+      expect(res.body.data.rating).toBe(3);
+      expect(res.body.data.comment).toBe('Updated comment');
     });
 
     test('should allow updating only comment', async () => {
@@ -429,15 +429,15 @@ describe('Feedback Controller Tests', () => {
         });
 
       expect(res.status).toBe(200);
-      expect(res.body.feedback.rating).toBe(3);
-      expect(res.body.feedback.comment).toBe('Final comment');
+      expect(res.body.data.rating).toBe(3);
+      expect(res.body.data.comment).toBe('Final comment');
     });
 
     test('should update timestamp on modification', async () => {
       const getRes = await request(app)
         .get(`/feedback?projectId=${projectId1}`);
 
-      const originalUpdated = getRes.body.feedback.find(
+      const originalUpdated = getRes.body.data.find(
         f => f._id.toString() === feedbackId1.toString()
       ).updated;
 
@@ -450,7 +450,7 @@ describe('Feedback Controller Tests', () => {
           rating: 2
         });
 
-      expect(new Date(updateRes.body.feedback.updated) > new Date(originalUpdated)).toBe(true);
+      expect(new Date(updateRes.body.data.updated) > new Date(originalUpdated)).toBe(true);
     });
 
     test('should prevent non-author from updating', async () => {
@@ -515,7 +515,7 @@ describe('Feedback Controller Tests', () => {
           title: 'Delete Test Project'
         });
 
-      const testProjectId = newProjectRes.body.project._id;
+      const testProjectId = newProjectRes.body.data.project._id;
 
       // Create feedback to delete
       const createRes = await request(app)
@@ -527,13 +527,13 @@ describe('Feedback Controller Tests', () => {
           comment: 'To be deleted'
         });
 
-      const feedbackIdToDelete = createRes.body.feedback._id;
+      const feedbackIdToDelete = createRes.body.data._id;
 
       // Verify it exists
       const getRes = await request(app)
         .get(`/feedback?projectId=${testProjectId}`);
-      
-      const found = getRes.body.feedback.find(f => f._id.toString() === feedbackIdToDelete.toString());
+
+      const found = getRes.body.data.find(f => f._id.toString() === feedbackIdToDelete.toString());
       expect(found).toBeDefined();
 
       // Delete it
@@ -549,7 +549,7 @@ describe('Feedback Controller Tests', () => {
       const getAfterDelete = await request(app)
         .get(`/feedback?projectId=${testProjectId}`);
       
-      const notFound = getAfterDelete.body.feedback.find(
+      const notFound = getAfterDelete.body.data.find(
         f => f._id.toString() === feedbackIdToDelete.toString()
       );
       expect(notFound).toBeUndefined();
@@ -564,7 +564,7 @@ describe('Feedback Controller Tests', () => {
           title: 'Delete Prevention Test Project'
         });
 
-      const testProjectId = newProjectRes.body.project._id;
+      const testProjectId = newProjectRes.body.data.project._id;
 
       // Create feedback as token1
       const createRes = await request(app)
@@ -576,7 +576,7 @@ describe('Feedback Controller Tests', () => {
           comment: 'Should not be deleted'
         });
 
-      const feedbackId = createRes.body.feedback._id;
+      const feedbackId = createRes.body.data._id;
 
       // Try to delete as token2 (different user)
       const res = await request(app)
@@ -591,7 +591,7 @@ describe('Feedback Controller Tests', () => {
       const getRes = await request(app)
         .get(`/feedback?projectId=${testProjectId}`);
       
-      const found = getRes.body.feedback.find(f => f._id.toString() === feedbackId.toString());
+      const found = getRes.body.data.find(f => f._id.toString() === feedbackId.toString());
       expect(found).toBeDefined();
     });
 
@@ -637,7 +637,7 @@ describe('Feedback Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.feedback.comment).toHaveLength(1000);
+      expect(res.body.data.comment).toHaveLength(1000);
     });
 
     test('should accept special characters in comment', async () => {
@@ -661,7 +661,7 @@ describe('Feedback Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.feedback.comment).toBe(specialComment);
+      expect(res.body.data.comment).toBe(specialComment);
     });
 
     test('should not modify created timestamp on update', async () => {
@@ -674,8 +674,8 @@ describe('Feedback Controller Tests', () => {
           comment: 'Original'
         });
 
-      const feedbackId = createRes.body.feedback._id;
-      const originalCreated = createRes.body.feedback.created;
+      const feedbackId = createRes.body.data._id;
+      const originalCreated = createRes.body.data.created;
 
       await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -686,7 +686,7 @@ describe('Feedback Controller Tests', () => {
           rating: 4
         });
 
-      expect(updateRes.body.feedback.created).toBe(originalCreated);
+      expect(updateRes.body.data.created).toBe(originalCreated);
     });
 
     test('should handle boundary rating values', async () => {
@@ -701,14 +701,14 @@ describe('Feedback Controller Tests', () => {
       // Test rating 1
       const res1 = await request(app)
         .post('/feedback')
-        .set('Authorization', `Bearer ${testUser.body.token}`)
+        .set('Authorization', `Bearer ${testUser.body.data.token}`)
         .send({
           projectId: projectId1,
           rating: 1
         });
 
       expect(res1.status).toBe(201);
-      expect(res1.body.feedback.rating).toBe(1);
+      expect(res1.body.data.rating).toBe(1);
 
       // Test rating 5
       const newUser2 = await request(app)
@@ -721,14 +721,14 @@ describe('Feedback Controller Tests', () => {
 
       const res5 = await request(app)
         .post('/feedback')
-        .set('Authorization', `Bearer ${newUser2.body.token}`)
+        .set('Authorization', `Bearer ${newUser2.body.data.token}`)
         .send({
           projectId: projectId2,
           rating: 5
         });
 
       expect(res5.status).toBe(201);
-      expect(res5.body.feedback.rating).toBe(5);
+      expect(res5.body.data.rating).toBe(5);
     });
 
     test('should enforce unique compound index on [projectId, authorId]', async () => {
