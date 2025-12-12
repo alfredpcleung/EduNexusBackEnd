@@ -5,9 +5,17 @@
 
 ## Base URL
 ```
-http://localhost:3000/api  (Development)
-https://your-render-url/api  (Production)
+http://localhost:3000/api                                    (Local Development)
+https://edunexusbackend-mi24.onrender.com/api                (Production - LIVE)
 ```
+
+---
+
+## Status
+✅ **Production Verified:** December 12, 2025  
+✅ **Authentication:** Working (JWT with 7-day expiration)  
+✅ **Database:** Connected (MongoDB Atlas)  
+✅ **All Endpoints:** Operational
 
 ---
 

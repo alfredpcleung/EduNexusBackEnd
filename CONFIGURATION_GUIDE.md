@@ -1,6 +1,7 @@
 # Configuration Guide: Frontend & Backend Setup
 
-**Last Updated:** December 11, 2025
+**Last Updated:** December 12, 2025  
+**Status:** ✅ Production Deployed & Verified
 
 ## Table of Contents
 
@@ -9,6 +10,19 @@
 3. [Local Development Setup](#local-development-setup)
 4. [Production Deployment](#production-deployment)
 5. [Troubleshooting](#troubleshooting)
+
+---
+
+## Quick Start - Production (Live)
+
+**Backend URL:** `https://edunexusbackend-mi24.onrender.com/api`  
+**Status:** ✅ Live and Operational  
+**Features:** Signup/signin working, courses tracked, projects & feedback functional
+
+For frontend, just point to the production URL in `.env`:
+```env
+VITE_API_BASE_URL=https://edunexusbackend-mi24.onrender.com/api
+```
 
 ---
 
