@@ -44,8 +44,8 @@ describe('Feedback Controller Tests', () => {
         password: 'password123'
       });
 
-    token1 = signup1.body.token;
-    user1Uid = signup1.body.user.uid;
+    token1 = signup1.body.data.token;
+    user1Uid = signup1.body.data.user.uid;
 
     const signup2 = await request(app)
       .post('/auth/signup')
@@ -55,8 +55,8 @@ describe('Feedback Controller Tests', () => {
         password: 'password456'
       });
 
-    token2 = signup2.body.token;
-    user2Uid = signup2.body.user.uid;
+    token2 = signup2.body.data.token;
+    user2Uid = signup2.body.data.user.uid;
 
     const signup3 = await request(app)
       .post('/auth/signup')
@@ -66,8 +66,8 @@ describe('Feedback Controller Tests', () => {
         password: 'password789'
       });
 
-    token3 = signup3.body.token;
-    user3Uid = signup3.body.user.uid;
+    token3 = signup3.body.data.token;
+    user3Uid = signup3.body.data.user.uid;
 
     // Create test projects
     const project1Res = await request(app)
@@ -79,7 +79,7 @@ describe('Feedback Controller Tests', () => {
         status: 'active'
       });
 
-    projectId1 = project1Res.body.project._id;
+    projectId1 = project1Res.body.data.project._id;
 
     const project2Res = await request(app)
       .post('/projects')
@@ -90,7 +90,7 @@ describe('Feedback Controller Tests', () => {
         status: 'active'
       });
 
-    projectId2 = project2Res.body.project._id;
+    projectId2 = project2Res.body.data.project._id;
   });
 
   afterAll(async () => {

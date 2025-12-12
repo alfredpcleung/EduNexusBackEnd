@@ -1,4 +1,5 @@
 const Project = require('../Models/project');
+const errorResponse = require('../Utils/errorResponse');
 
 /**
  * GET /api/projects
@@ -16,7 +17,7 @@ exports.listProjects = async (req, res) => {
     const projects = await Project.find(filter).sort({ created: -1 });
     res.status(200).json({
       success: true,
-      projects: projects,
+      data: projects,
       count: projects.length
     });
   } catch (error) {
@@ -38,15 +39,12 @@ exports.getProject = async (req, res) => {
 
     const project = await Project.findById(projectId);
     if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: 'Project not found'
-      });
+      return errorResponse(res, 404, 'Project not found');
     }
 
     res.status(200).json({
       success: true,
-      project: project
+      data: project
     });
   } catch (error) {
     res.status(500).json({
@@ -68,10 +66,7 @@ exports.createProject = async (req, res) => {
     const ownerUid = req.user.uid;
 
     if (!title) {
-      return res.status(400).json({
-        success: false,
-        message: 'Title is required'
-      });
+      return errorResponse(res, 400, 'Title is required');
     }
 
     const newProject = new Project({
@@ -86,7 +81,7 @@ exports.createProject = async (req, res) => {
     await newProject.save();
     res.status(201).json({
       success: true,
-      project: newProject
+      data: newProject
     });
   } catch (error) {
     res.status(500).json({
@@ -110,18 +105,12 @@ exports.updateProject = async (req, res) => {
 
     const project = await Project.findById(projectId);
     if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: 'Project not found'
-      });
+      return errorResponse(res, 404, 'Project not found');
     }
 
     // Check ownership
     if (project.owner !== ownerUid) {
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have permission to update this project'
-      });
+      return errorResponse(res, 403, 'You are not authorized to perform this action');
     }
 
     // Update fields
@@ -135,7 +124,7 @@ exports.updateProject = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      project: project
+      data: project
     });
   } catch (error) {
     res.status(500).json({
@@ -157,24 +146,18 @@ exports.deleteProject = async (req, res) => {
 
     const project = await Project.findById(projectId);
     if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: 'Project not found'
-      });
+      return errorResponse(res, 404, 'Project not found');
     }
 
     // Check ownership
     if (project.owner !== ownerUid) {
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have permission to delete this project'
-      });
+      return errorResponse(res, 403, 'You are not authorized to perform this action');
     }
 
     await Project.findByIdAndDelete(projectId);
     res.status(200).json({
       success: true,
-      message: 'Project deleted successfully'
+      data: { message: 'Project deleted successfully' }
     });
   } catch (error) {
     res.status(500).json({

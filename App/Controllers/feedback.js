@@ -1,4 +1,5 @@
 const Feedback = require('../Models/feedback');
+const errorResponse = require('../Utils/errorResponse');
 
 /**
  * GET /api/feedback?projectId=...
@@ -10,10 +11,7 @@ exports.listFeedback = async (req, res) => {
     let filter = {};
 
     if (!projectId) {
-      return res.status(400).json({
-        success: false,
-        message: 'projectId query parameter is required'
-      });
+      return errorResponse(res, 400, 'projectId query parameter is required');
     }
 
     filter.projectId = projectId;
@@ -22,7 +20,7 @@ exports.listFeedback = async (req, res) => {
     const feedback = await Feedback.find(filter).sort({ created: -1 });
     res.status(200).json({
       success: true,
-      feedback: feedback,
+      data: feedback,
       count: feedback.length
     });
   } catch (error) {
@@ -46,17 +44,11 @@ exports.createFeedback = async (req, res) => {
     const authorUid = req.user.uid;
 
     if (!projectId) {
-      return res.status(400).json({
-        success: false,
-        message: 'projectId is required'
-      });
+      return errorResponse(res, 400, 'projectId is required');
     }
 
     if (rating === undefined || rating < 1 || rating > 5) {
-      return res.status(400).json({
-        success: false,
-        message: 'rating is required and must be between 1 and 5'
-      });
+      return errorResponse(res, 400, 'rating is required and must be between 1 and 5');
     }
 
     // Check if feedback already exists for this author on this project
@@ -66,10 +58,7 @@ exports.createFeedback = async (req, res) => {
     });
 
     if (existingFeedback) {
-      return res.status(409).json({
-        success: false,
-        message: 'You have already provided feedback for this project'
-      });
+      return errorResponse(res, 409, 'You have already provided feedback for this project');
     }
 
     const newFeedback = new Feedback({
@@ -82,15 +71,12 @@ exports.createFeedback = async (req, res) => {
     await newFeedback.save();
     res.status(201).json({
       success: true,
-      feedback: newFeedback
+      data: newFeedback
     });
   } catch (error) {
     // Handle unique constraint violation from MongoDB
     if (error.code === 11000) {
-      return res.status(409).json({
-        success: false,
-        message: 'You have already provided feedback for this project'
-      });
+      return errorResponse(res, 409, 'You have already provided feedback for this project');
     }
 
     res.status(500).json({
@@ -114,26 +100,17 @@ exports.updateFeedback = async (req, res) => {
 
     const feedback = await Feedback.findById(feedbackId);
     if (!feedback) {
-      return res.status(404).json({
-        success: false,
-        message: 'Feedback not found'
-      });
+      return errorResponse(res, 404, 'Feedback not found');
     }
 
     // Check authorship
     if (feedback.authorId !== authorUid) {
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have permission to update this feedback'
-      });
+      return errorResponse(res, 403, 'You are not authorized to perform this action');
     }
 
     // Validate rating if provided
     if (rating !== undefined && (rating < 1 || rating > 5)) {
-      return res.status(400).json({
-        success: false,
-        message: 'rating must be between 1 and 5'
-      });
+      return errorResponse(res, 400, 'rating must be between 1 and 5');
     }
 
     // Update fields
@@ -145,7 +122,7 @@ exports.updateFeedback = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      feedback: feedback
+      data: feedback
     });
   } catch (error) {
     res.status(500).json({
@@ -167,24 +144,18 @@ exports.deleteFeedback = async (req, res) => {
 
     const feedback = await Feedback.findById(feedbackId);
     if (!feedback) {
-      return res.status(404).json({
-        success: false,
-        message: 'Feedback not found'
-      });
+      return errorResponse(res, 404, 'Feedback not found');
     }
 
     // Check authorship
     if (feedback.authorId !== authorUid) {
-      return res.status(403).json({
-        success: false,
-        message: 'You do not have permission to delete this feedback'
-      });
+      return errorResponse(res, 403, 'You are not authorized to perform this action');
     }
 
     await Feedback.findByIdAndDelete(feedbackId);
     res.status(200).json({
       success: true,
-      message: 'Feedback deleted successfully'
+      data: { message: 'Feedback deleted successfully' }
     });
   } catch (error) {
     res.status(500).json({

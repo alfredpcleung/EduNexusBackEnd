@@ -9,9 +9,9 @@ let app;
 let server;
 let authToken;
 let testUserId;
+let testUid;
 let testEmail = 'testuser@example.com';
 let testPassword = 'TestPassword123';
-let testUid = 'test_uid_' + Date.now();
 
 // Import models and routers
 const UserModel = require('../App/Models/user');
@@ -66,18 +66,15 @@ describe('Authentication & CRUD Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.token).toBeDefined();
-      expect(res.body.user.displayName).toBe('Test User');
-      expect(res.body.user.email).toBe(testEmail);
-      expect(res.body.user.role).toBe('student');
-      expect(res.body.user.uid).toBeDefined(); // Verify uid was auto-generated
+      expect(res.body.data.token).toBeDefined();
+      expect(res.body.data.user.displayName).toBe('Test User');
+      expect(res.body.data.user.email).toBe(testEmail);
+      expect(res.body.data.user.role).toBe('student');
+      expect(res.body.data.user.uid).toBeDefined(); // Verify uid was auto-generated
 
       // Store token and userId for later tests
-      authToken = res.body.token;
-      
-      // Decode token to get userId
-      const decoded = jwt.decode(authToken);
-      testUserId = decoded.userId;
+      authToken = res.body.data.token;
+      testUid = res.body.data.user.uid;
     });
 
     test('Should fail signup with missing required fields', async () => {
@@ -103,7 +100,7 @@ describe('Authentication & CRUD Tests', () => {
           // uid is optional
         });
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(409);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('already exists');
     });
@@ -120,9 +117,9 @@ describe('Authentication & CRUD Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.token).toBeDefined();
-      expect(res.body.user.displayName).toBe('Test User');
-      expect(res.body.user.email).toBe(testEmail);
+      expect(res.body.data.token).toBeDefined();
+      expect(res.body.data.user.displayName).toBe('Test User');
+      expect(res.body.data.user.email).toBe(testEmail);
     });
 
     test('Should fail signin with wrong password', async () => {
@@ -217,13 +214,14 @@ describe('Authentication & CRUD Tests', () => {
           status: 'active'
         });
 
-      expect(res.status).toBe(200);
-      expect(res.body.title).toBe('Advanced JavaScript');
-      expect(res.body.owner).toBe(testUserId); // Verify owner is the authenticated user
-      expect(res.body.credits).toBe(4);
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.title).toBe('Advanced JavaScript');
+      expect(res.body.data.owner).toBe(testUid); // Verify owner is the authenticated user's UID
+      expect(res.body.data.credits).toBe(4);
 
       // Store course ID from the response
-      courseId = res.body._id || res.body.id;
+      courseId = res.body.data._id || res.body.data.id;
     });
   });
 
@@ -233,9 +231,10 @@ describe('Authentication & CRUD Tests', () => {
         .get('/api/courses');
 
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBeGreaterThan(0);
-      expect(res.body[0].title).toBeDefined();
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
+      expect(res.body.data[0].title).toBeDefined();
     });
 
     test('Should get course by ID without auth', async () => {
@@ -243,9 +242,10 @@ describe('Authentication & CRUD Tests', () => {
         .get(`/api/courses/${courseId}`);
 
       expect(res.status).toBe(200);
-      expect(res.body._id).toBe(courseId);
-      expect(res.body.title).toBe('Advanced JavaScript');
-      expect(res.body.owner).toBe(testUserId);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data._id).toBe(courseId);
+      expect(res.body.data.title).toBe('Advanced JavaScript');
+      expect(res.body.data.owner).toBe(testUserId);
     });
 
     test('Should fail to get non-existent course', async () => {
@@ -253,8 +253,8 @@ describe('Authentication & CRUD Tests', () => {
       const res = await request(app)
         .get(`/api/courses/${fakeId}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body).toBeNull();
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
     });
   });
 
@@ -363,15 +363,15 @@ describe('Authentication & CRUD Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.message).toContain('deleted successfully');
+      expect(res.body.data.message).toContain('deleted successfully');
     });
 
     test('Should not be able to get deleted course', async () => {
       const res = await request(app)
         .get(`/api/courses/${courseId}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body).toBeNull();
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
     });
   });
 
@@ -385,25 +385,27 @@ describe('Authentication & CRUD Tests', () => {
         .get('/api/users');
 
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBeGreaterThan(0);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
     });
 
     test('Should get user by ID without auth', async () => {
       const res = await request(app)
-        .get(`/api/users/${testUserId}`);
+        .get(`/api/users/${testUid}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.displayName).toBe('Test User');
-      expect(res.body.email).toBe(testEmail);
-      expect(res.body.password).toBeUndefined(); // Password should never be returned
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.displayName).toBe('Test User');
+      expect(res.body.data.email).toBe(testEmail);
+      expect(res.body.data.password).toBeUndefined(); // Password should never be returned
     });
   });
 
   describe('Users - Update (Protected)', () => {
     test('Should fail to update user without auth token', async () => {
       const res = await request(app)
-        .put(`/api/users/${testUserId}`)
+        .put(`/api/users/${testUid}`)
         .send({
           displayName: 'Updated Name'
         });
@@ -414,7 +416,7 @@ describe('Authentication & CRUD Tests', () => {
 
     test('Should successfully update own user profile', async () => {
       const res = await request(app)
-        .put(`/api/users/${testUserId}`)
+        .put(`/api/users/${testUid}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           displayName: 'Updated Test User',
@@ -431,7 +433,7 @@ describe('Authentication & CRUD Tests', () => {
   describe('Users - Delete (Protected)', () => {
     test('Should fail to delete user without auth token', async () => {
       const res = await request(app)
-        .delete(`/api/users/${testUserId}`);
+        .delete(`/api/users/${testUid}`);
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -439,12 +441,12 @@ describe('Authentication & CRUD Tests', () => {
 
     test('Should successfully delete user', async () => {
       const res = await request(app)
-        .delete(`/api/users/${testUserId}`)
+        .delete(`/api/users/${testUid}`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.message).toContain('deleted successfully');
+      expect(res.body.data.message).toContain('deleted successfully');
     });
   });
 });

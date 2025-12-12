@@ -46,10 +46,9 @@ describe('User Controller', () => {
       const res = await request(app)
         .post('/api/users')
         .send(validUser)
-        .expect(200);
+        .expect(201);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.message).toContain('created successfully');
     });
   });
 
@@ -59,8 +58,9 @@ describe('User Controller', () => {
         .get('/api/users')
         .expect(200);
 
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBe(0);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBe(0);
     });
 
     it('should return all users', async () => {
@@ -77,8 +77,9 @@ describe('User Controller', () => {
         .get('/api/users')
         .expect(200);
 
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBe(2);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBe(2);
     });
   });
 
@@ -102,8 +103,9 @@ describe('User Controller', () => {
         .get(`/api/users/${userId}`)
         .expect(200);
 
-      expect(res.body.displayName).toBe('John Doe');
-      expect(res.body.email).toBe('john@example.com');
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.displayName).toBe('John Doe');
+      expect(res.body.data.email).toBe('john@example.com');
     });
 
     it('should return 404 for non-existent user', async () => {
@@ -111,9 +113,9 @@ describe('User Controller', () => {
 
       const res = await request(app)
         .get(`/api/users/${fakeId}`)
-        .expect(200);
+        .expect(404);
 
-      expect(res.body).toBeNull();
+      expect(res.body.success).toBe(false);
     });
   });
 

@@ -1,5 +1,6 @@
 var CourseModel = require("../Models/course");
 var UserModel = require("../Models/user");
+var errorResponse = require("../Utils/errorResponse");
 
 // Create a new course
 module.exports.create = async function (req, res, next) {
@@ -21,7 +22,10 @@ module.exports.create = async function (req, res, next) {
         newItem.owner = req.user.uid;
 
         let result = await CourseModel.create(newItem);
-        res.json(result);
+        res.status(201).json({
+            success: true,
+            data: result
+        });
 
     } catch (error) {
         console.log(error);
@@ -33,7 +37,10 @@ module.exports.create = async function (req, res, next) {
 module.exports.list = async function (req, res, next) {
     try {
         let list = await CourseModel.find();
-        res.json(list);
+        res.json({
+            success: true,
+            data: list
+        });
     } catch (error) {
         console.log(error);
         next(error);
@@ -44,7 +51,13 @@ module.exports.list = async function (req, res, next) {
 module.exports.inventoryByID = async function (req, res, next) {
     try {
         let inventory = await CourseModel.findOne({ _id: req.params.id });
-        res.json(inventory);
+        if (!inventory) {
+            return errorResponse(res, 404, "Course not found");
+        }
+        res.json({
+            success: true,
+            data: inventory
+        });
     } catch (error) {
         console.log(error);
         next(error);
@@ -63,10 +76,13 @@ module.exports.update = async function (req, res, next) {
         );
 
         if (!result) {
-            return res.status(404).json({ success: false, message: "Not Found" });
+            return errorResponse(res, 404, "Course not found");
         }
 
-        res.json({ success: true, data: result });
+        res.json({
+            success: true,
+            data: result
+        });
     } catch (error) {
         console.log(error);
         next(error);
@@ -79,9 +95,12 @@ module.exports.delete = async function (req, res, next) {
         let result = await CourseModel.deleteOne({ _id: req.params.id });
 
         if (result.deletedCount > 0) {
-            res.json({ success: true, message: "Course deleted successfully." });
+            res.json({
+                success: true,
+                data: { message: "Course deleted successfully." }
+            });
         } else {
-            res.json({ success: false, message: "Course not deleted. Are you sure it exists?" });
+            return errorResponse(res, 404, "Course not found");
         }
     } catch (error) {
         console.log(error);

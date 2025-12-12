@@ -39,8 +39,8 @@ describe('Project Controller Tests', () => {
         password: 'password123'
       });
 
-    token1 = signup1.body.token;
-    user1Uid = signup1.body.user.uid;
+    token1 = signup1.body.data.token;
+    user1Uid = signup1.body.data.user.uid;
 
     const signup2 = await request(app)
       .post('/auth/signup')
@@ -50,8 +50,8 @@ describe('Project Controller Tests', () => {
         password: 'password456'
       });
 
-    token2 = signup2.body.token;
-    user2Uid = signup2.body.user.uid;
+    token2 = signup2.body.data.token;
+    user2Uid = signup2.body.data.user.uid;
   });
 
   afterAll(async () => {
@@ -77,17 +77,17 @@ describe('Project Controller Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.project).toBeDefined();
-      expect(res.body.project.title).toBe('Web Development Portfolio');
-      expect(res.body.project.description).toBe('Build a personal portfolio website');
-      expect(res.body.project.owner).toBe(user1Uid);
-      expect(res.body.project.tags).toEqual(['frontend', 'react', 'css']);
-      expect(res.body.project.status).toBe('active');
-      expect(res.body.project._id).toBeDefined();
-      expect(res.body.project.created).toBeDefined();
-      expect(res.body.project.updated).toBeDefined();
+      expect(res.body.data.project).toBeDefined();
+      expect(res.body.data.project.title).toBe('Web Development Portfolio');
+      expect(res.body.data.project.description).toBe('Build a personal portfolio website');
+      expect(res.body.data.project.owner).toBe(user1Uid);
+      expect(res.body.data.project.tags).toEqual(['frontend', 'react', 'css']);
+      expect(res.body.data.project.status).toBe('active');
+      expect(res.body.data.project._id).toBeDefined();
+      expect(res.body.data.project.created).toBeDefined();
+      expect(res.body.data.project.updated).toBeDefined();
 
-      projectId1 = res.body.project._id;
+      projectId1 = res.body.data.project._id;
     });
 
     test('should set owner to authenticated user uid', async () => {
@@ -101,10 +101,12 @@ describe('Project Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.project.owner).toBe(user2Uid);
-      expect(res.body.project.owner).not.toBe(user1Uid);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.project).toBeDefined();
+      expect(res.body.data.project.owner).toBe(user2Uid);
+      expect(res.body.data.project.owner).not.toBe(user1Uid);
 
-      projectId2 = res.body.project._id;
+      projectId2 = res.body.data.project._id;
     });
 
     test('should default tags to empty array if not provided', async () => {
@@ -117,8 +119,9 @@ describe('Project Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(Array.isArray(res.body.project.tags)).toBe(true);
-      expect(res.body.project.tags.length).toBe(0);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data.project.tags)).toBe(true);
+      expect(res.body.data.project.tags.length).toBe(0);
     });
 
     test('should default status to active if not provided', async () => {
@@ -130,7 +133,8 @@ describe('Project Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.project.status).toBe('active');
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.project.status).toBe('active');
     });
 
     test('should fail without authentication', async () => {
@@ -182,7 +186,8 @@ describe('Project Controller Tests', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.project.courseId).toBe('course123');
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.project.courseId).toBe('course123');
     });
   });
 
@@ -195,8 +200,8 @@ describe('Project Controller Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.projects)).toBe(true);
-      expect(res.body.projects.length).toBeGreaterThan(0);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
       expect(res.body.count).toBeGreaterThan(0);
     });
 
@@ -205,7 +210,8 @@ describe('Project Controller Tests', () => {
         .get('/projects');
 
       expect(res.status).toBe(200);
-      const foundProject = res.body.projects.find(p => p._id.toString() === projectId1.toString());
+      expect(res.body.success).toBe(true);
+      const foundProject = res.body.data.find(p => p._id.toString() === projectId1.toString());
       expect(foundProject).toBeDefined();
       expect(foundProject.title).toBe('Web Development Portfolio');
       expect(foundProject.owner).toBe(user1Uid);
@@ -216,9 +222,10 @@ describe('Project Controller Tests', () => {
         .get(`/projects?owner=${user1Uid}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.projects.length).toBeGreaterThan(0);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
       
-      res.body.projects.forEach(project => {
+      res.body.data.forEach(project => {
         expect(project.owner).toBe(user1Uid);
       });
     });
@@ -228,9 +235,10 @@ describe('Project Controller Tests', () => {
         .get('/projects?status=active');
 
       expect(res.status).toBe(200);
-      expect(res.body.projects.length).toBeGreaterThan(0);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
       
-      res.body.projects.forEach(project => {
+      res.body.data.forEach(project => {
         expect(project.status).toBe('active');
       });
     });
@@ -240,10 +248,11 @@ describe('Project Controller Tests', () => {
         .get('/projects?courseId=course123');
 
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body.projects)).toBe(true);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
       
-      if (res.body.projects.length > 0) {
-        res.body.projects.forEach(project => {
+      if (res.body.data.length > 0) {
+        res.body.data.forEach(project => {
           expect(project.courseId).toBe('course123');
         });
       }
@@ -254,7 +263,8 @@ describe('Project Controller Tests', () => {
         .get('/projects?status=nonexistent');
 
       expect(res.status).toBe(200);
-      expect(res.body.projects).toEqual([]);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toEqual([]);
       expect(res.body.count).toBe(0);
     });
 
@@ -263,8 +273,9 @@ describe('Project Controller Tests', () => {
         .get(`/projects?owner=${user1Uid}&status=active`);
 
       expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
       
-      res.body.projects.forEach(project => {
+      res.body.data.forEach(project => {
         expect(project.owner).toBe(user1Uid);
         expect(project.status).toBe('active');
       });
@@ -280,10 +291,10 @@ describe('Project Controller Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.project).toBeDefined();
-      expect(res.body.project._id.toString()).toBe(projectId1.toString());
-      expect(res.body.project.title).toBe('Web Development Portfolio');
-      expect(res.body.project.owner).toBe(user1Uid);
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data._id.toString()).toBe(projectId1.toString());
+      expect(res.body.data.title).toBe('Web Development Portfolio');
+      expect(res.body.data.owner).toBe(user1Uid);
     });
 
     test('should return project with all fields', async () => {
@@ -291,7 +302,8 @@ describe('Project Controller Tests', () => {
         .get(`/projects/${projectId1}`);
 
       expect(res.status).toBe(200);
-      const project = res.body.project;
+      expect(res.body.success).toBe(true);
+      const project = res.body.data;
       
       expect(project).toHaveProperty('_id');
       expect(project).toHaveProperty('title');
@@ -340,8 +352,8 @@ describe('Project Controller Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.project.title).toBe('Updated Portfolio Project');
-      expect(res.body.project.description).toBe('Updated description');
+      expect(res.body.data.title).toBe('Updated Portfolio Project');
+      expect(res.body.data.description).toBe('Updated description');
     });
 
     test('should update individual fields', async () => {
@@ -353,9 +365,10 @@ describe('Project Controller Tests', () => {
         });
 
       expect(res.status).toBe(200);
-      expect(res.body.project.status).toBe('archived');
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.status).toBe('archived');
       // Verify other fields unchanged
-      expect(res.body.project.title).toBe('Updated Portfolio Project');
+      expect(res.body.data.title).toBe('Updated Portfolio Project');
     });
 
     test('should update tags', async () => {
@@ -367,7 +380,8 @@ describe('Project Controller Tests', () => {
         });
 
       expect(res.status).toBe(200);
-      expect(res.body.project.tags).toEqual(['javascript', 'node.js']);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.tags).toEqual(['javascript', 'node.js']);
     });
 
     test('should update timestamp on modification', async () => {

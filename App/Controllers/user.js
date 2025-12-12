@@ -1,4 +1,5 @@
 var UserModel = require('../Models/user');
+var errorResponse = require('../Utils/errorResponse');
 
 module.exports.create = async function (req, res, next) {
     try {
@@ -7,12 +8,10 @@ module.exports.create = async function (req, res, next) {
             admin: false
         };
         let result = await UserModel.create(userData);
-        res.json(
-            {
-                success: true,
-                message: "User created successfully."
-            }
-        );
+        res.status(201).json({
+            success: true,
+            data: result
+        });
     } catch (error) {
         console.log(error);
         next(error);
@@ -22,7 +21,10 @@ module.exports.create = async function (req, res, next) {
 module.exports.list = async function (req, res, next) {
     try {
         let list = await UserModel.find();
-        res.json(list);
+        res.json({
+            success: true,
+            data: list
+        });
     } catch (error) {
         console.log(error);
         next(error);
@@ -32,7 +34,13 @@ module.exports.list = async function (req, res, next) {
 module.exports.LisByID = async function (req, res, next) {
     try {
         let Luser = await UserModel.findOne({ _id: req.params.id });
-        res.json(Luser);
+        if (!Luser) {
+            return errorResponse(res, 404, "User not found");
+        }
+        res.json({
+            success: true,
+            data: Luser
+        });
     } catch (error) {
         console.log(error);
         next(error);
@@ -40,7 +48,10 @@ module.exports.LisByID = async function (req, res, next) {
 }
 
 module.exports.read = async function (req, res, next) {
-    res.json(req.user);
+    res.json({
+        success: true,
+        data: req.user
+    });
 }
 
 module.exports.SetUserByUID = async function (req, res, next) {
@@ -63,10 +74,13 @@ module.exports.update = async function (req, res, next) {
         );
 
         if (!result) {
-            return res.status(404).json({ success: false, message: "Not Found" });
+            return errorResponse(res, 404, "User not found");
         }
 
-        res.json({ success: true, data: result });
+        res.json({
+            success: true,
+            data: result
+        });
     } catch (error) {
         console.log(error);
         next(error);
@@ -77,19 +91,12 @@ module.exports.delete = async function (req, res, next) {
     try {
         let result = await UserModel.deleteOne({ uid: req.params.uid });
         if (result.deletedCount > 0) {
-            res.json(
-                {
-                    success: true,
-                    message: "User deleted successfully."
-                }
-            );
+            res.json({
+                success: true,
+                data: { message: "User deleted successfully." }
+            });
         } else {
-            res.json(
-                {
-                    success: false,
-                    message: "User not deleted. Are you sure it exists?"
-                }
-            );
+            return errorResponse(res, 404, "User not found");
         }
     } catch (error) {
         console.log(error);
@@ -105,24 +112,17 @@ module.exports.setAdmin = async function (req, res, next) {
         console.log("authorized", authorized.admin);
 
         if (!authorized.admin) {
-            return res.status(403).json(
-                {
-                    success: false,
-                    message: "User is not authorized"
-                }
-            )
+            return errorResponse(res, 403, "You are not authorized to perform this action");
         }
         else {
             // Update one single field.
             let result = await UserModel.updateOne({ _id: req.params.userID }, { admin: true });
             console.log("setAdmin", result);
             if (result.modifiedCount > 0) {
-                res.json(
-                    {
-                        success: true,
-                        message: "User promoted successfully."
-                    }
-                );
+                res.json({
+                    success: true,
+                    data: { message: "User promoted successfully." }
+                });
             }
             else {
                 // Express will catch this on its own.

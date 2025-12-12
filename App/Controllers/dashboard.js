@@ -2,6 +2,7 @@ const User = require('../Models/user');
 const Course = require('../Models/course');
 const Project = require('../Models/project');
 const Feedback = require('../Models/feedback');
+const errorResponse = require('../Utils/errorResponse');
 
 /**
  * GET /api/dashboard/me
@@ -14,10 +15,7 @@ exports.getDashboard = async (req, res) => {
     // Fetch user
     const user = await User.findOne({ uid: userUid });
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+      return errorResponse(res, 404, 'User not found');
     }
 
     // Fetch courses owned by user
@@ -31,29 +29,31 @@ exports.getDashboard = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      dashboard: {
-        user: {
-          uid: user.uid,
-          displayName: user.displayName,
-          email: user.email,
-          role: user.role,
-          profilePic: user.profilePic,
-          bio: user.bio,
-          linkedin: user.linkedin,
-          created: user.created,
-          updated: user.updated
-        },
-        ownedCourses: {
-          count: ownedCourses.length,
-          courses: ownedCourses
-        },
-        ownedProjects: {
-          count: ownedProjects.length,
-          projects: ownedProjects
-        },
-        authoredFeedback: {
-          count: authoredFeedback.length,
-          feedback: authoredFeedback
+      data: {
+        dashboard: {
+          user: {
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            role: user.role,
+            profilePic: user.profilePic,
+            bio: user.bio,
+            linkedin: user.linkedin,
+            created: user.created,
+            updated: user.updated
+          },
+          ownedCourses: {
+            count: ownedCourses.length,
+            courses: ownedCourses
+          },
+          ownedProjects: {
+            count: ownedProjects.length,
+            projects: ownedProjects
+          },
+          authoredFeedback: {
+            count: authoredFeedback.length,
+            feedback: authoredFeedback
+          }
         }
       }
     });

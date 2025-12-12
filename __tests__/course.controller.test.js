@@ -48,11 +48,12 @@ describe('Course Controller', () => {
       const res = await request(app)
         .post('/api/courses')
         .send(validCourse)
-        .expect(200);
+        .expect(201);
 
-      expect(res.body.title).toBe('Introduction to Web Development');
-      expect(res.body.instructor).toBe('John Smith');
-      expect(Array.isArray(res.body.tags)).toBe(true);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.title).toBe('Introduction to Web Development');
+      expect(res.body.data.instructor).toBe('John Smith');
+      expect(Array.isArray(res.body.data.tags)).toBe(true);
     });
 
     it('should accept tags as comma-separated string', async () => {
@@ -68,12 +69,12 @@ describe('Course Controller', () => {
       const res = await request(app)
         .post('/api/courses')
         .send(course)
-        .expect(200);
+        .expect(201);
 
-      expect(Array.isArray(res.body.tags)).toBe(true);
-      expect(res.body.tags).toContain('javascript');
-      expect(res.body.tags).toContain('advanced');
-      expect(res.body.tags).toContain('programming');
+      expect(Array.isArray(res.body.data.tags)).toBe(true);
+      expect(res.body.data.tags).toContain('javascript');
+      expect(res.body.data.tags).toContain('advanced');
+      expect(res.body.data.tags).toContain('programming');
     });
 
     it('should accept tags as array', async () => {
@@ -89,10 +90,10 @@ describe('Course Controller', () => {
       const res = await request(app)
         .post('/api/courses')
         .send(course)
-        .expect(200);
+        .expect(201);
 
-      expect(Array.isArray(res.body.tags)).toBe(true);
-      expect(res.body.tags.length).toBe(3);
+      expect(Array.isArray(res.body.data.tags)).toBe(true);
+      expect(res.body.data.tags.length).toBe(3);
     });
 
     it('should default tags to empty array if not provided', async () => {
@@ -107,10 +108,10 @@ describe('Course Controller', () => {
       const res = await request(app)
         .post('/api/courses')
         .send(course)
-        .expect(200);
+        .expect(201);
 
-      expect(Array.isArray(res.body.tags)).toBe(true);
-      expect(res.body.tags.length).toBe(0);
+      expect(Array.isArray(res.body.data.tags)).toBe(true);
+      expect(res.body.data.tags.length).toBe(0);
     });
   });
 
@@ -120,8 +121,9 @@ describe('Course Controller', () => {
         .get('/api/courses')
         .expect(200);
 
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBe(0);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBe(0);
     });
 
     it('should return all courses', async () => {
@@ -148,8 +150,9 @@ describe('Course Controller', () => {
         .get('/api/courses')
         .expect(200);
 
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBe(2);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBe(2);
     });
   });
 
@@ -173,8 +176,9 @@ describe('Course Controller', () => {
         .get(`/api/courses/${courseId}`)
         .expect(200);
 
-      expect(res.body.title).toBe('Introduction to Web Development');
-      expect(res.body.instructor).toBe('John Smith');
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.title).toBe('Introduction to Web Development');
+      expect(res.body.data.instructor).toBe('John Smith');
     });
 
     it('should return null for non-existent course', async () => {
@@ -182,9 +186,9 @@ describe('Course Controller', () => {
 
       const res = await request(app)
         .get(`/api/courses/${fakeId}`)
-        .expect(200);
+        .expect(404);
 
-      expect(res.body).toBeNull();
+      expect(res.body.success).toBe(false);
     });
   });
 
@@ -301,10 +305,9 @@ describe('Course Controller', () => {
 
       const res = await request(app)
         .delete(`/api/courses/${fakeId}`)
-        .expect(200);
+        .expect(404);
 
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('not deleted');
     });
   });
 });
