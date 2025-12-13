@@ -9,6 +9,15 @@ module.exports.create = async function (req, res, next) {
 
         let newItem = req.body;
 
+        // Validate required fields
+        if (!newItem.title || !newItem.title.trim()) {
+            return errorResponse(res, 400, 'Course title is required');
+        }
+
+        if (!newItem.description) {
+            return errorResponse(res, 400, 'Course description is required');
+        }
+
         // Handle tags: accept either array or comma-separated string
         if (Array.isArray(req.body.tags)) {
             newItem.tags = req.body.tags;
@@ -29,6 +38,17 @@ module.exports.create = async function (req, res, next) {
 
     } catch (error) {
         console.log(error);
+        
+        // Handle MongoDB validation errors
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Validation error',
+                errors: messages
+            });
+        }
+
         next(error);
     }
 };
