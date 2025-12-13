@@ -1,9 +1,15 @@
 const request = require('supertest');
 const express = require('express');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+
 const CourseController = require('../App/Controllers/course');
 const CourseModel = require('../App/Models/course');
+const UserModel = require('../App/Models/user');
 const courseRouter = require('../App/Routers/course');
+const userRouter = require('../App/Routers/user');
+const authRouter = require('../App/Routers/auth');
 
 // Mock MongoDB connection
 jest.mock('../Config/db.js', () => jest.fn());
@@ -11,10 +17,14 @@ jest.mock('../Config/db.js', () => jest.fn());
 describe('Course Controller', () => {
   let app;
   let courseId;
+  let authToken;
+  let testUid;
   
   beforeAll(async () => {
     app = express();
     app.use(express.json());
+    app.use('/api/auth', authRouter);
+    app.use('/api/users', userRouter);
     app.use('/api/courses', courseRouter);
 
     // Connect to test database
@@ -23,6 +33,23 @@ describe('Course Controller', () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
+
+    // Clear collections before tests
+    await UserModel.deleteMany({});
+    await CourseModel.deleteMany({});
+
+    // Create a test user and get auth token
+    const signupRes = await request(app)
+      .post('/api/auth/signup')
+      .send({
+        displayName: 'Test User',
+        email: 'coursetest@example.com',
+        password: 'TestPassword123',
+        role: 'instructor'
+      });
+
+    authToken = signupRes.body.data.token;
+    testUid = signupRes.body.data.user.uid;
   });
 
   afterAll(async () => {
@@ -47,6 +74,7 @@ describe('Course Controller', () => {
 
       const res = await request(app)
         .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
         .send(validCourse)
         .expect(201);
 
@@ -68,6 +96,7 @@ describe('Course Controller', () => {
 
       const res = await request(app)
         .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
         .send(course)
         .expect(201);
 
@@ -89,6 +118,7 @@ describe('Course Controller', () => {
 
       const res = await request(app)
         .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
         .send(course)
         .expect(201);
 
@@ -107,6 +137,7 @@ describe('Course Controller', () => {
 
       const res = await request(app)
         .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
         .send(course)
         .expect(201);
 
@@ -143,7 +174,10 @@ describe('Course Controller', () => {
       ];
 
       for (const course of courses) {
-        await request(app).post('/api/courses').send(course);
+        await request(app)
+          .post('/api/courses')
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(course);
       }
 
       const res = await request(app)
@@ -167,6 +201,7 @@ describe('Course Controller', () => {
 
       const createRes = await request(app)
         .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
         .send(course);
 
       const createdCourse = await CourseModel.findOne({ title: 'Introduction to Web Development' });
@@ -205,6 +240,7 @@ describe('Course Controller', () => {
 
       const createRes = await request(app)
         .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
         .send(course);
 
       const createdCourse = await CourseModel.findOne({ title: 'Original Title' });
@@ -219,6 +255,7 @@ describe('Course Controller', () => {
 
       const res = await request(app)
         .put(`/api/courses/${courseId}`)
+        .set('Authorization', `Bearer ${authToken}`)
         .send(updateData)
         .expect(200);
 
@@ -234,6 +271,7 @@ describe('Course Controller', () => {
 
       const res = await request(app)
         .put(`/api/courses/${courseId}`)
+        .set('Authorization', `Bearer ${authToken}`)
         .send(updateData)
         .expect(200);
 
@@ -248,11 +286,12 @@ describe('Course Controller', () => {
 
       const res = await request(app)
         .put(`/api/courses/${fakeId}`)
+        .set('Authorization', `Bearer ${authToken}`)
         .send(updateData)
         .expect(404);
 
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toBe('Not Found');
+      expect(res.body.message).toBe('Course not found');
     });
 
     it('should update status to valid enum value', async () => {
@@ -262,6 +301,7 @@ describe('Course Controller', () => {
 
       const res = await request(app)
         .put(`/api/courses/${courseId}`)
+        .set('Authorization', `Bearer ${authToken}`)
         .send(updateData)
         .expect(200);
 
@@ -281,6 +321,7 @@ describe('Course Controller', () => {
 
       const createRes = await request(app)
         .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
         .send(course);
 
       const createdCourse = await CourseModel.findOne({ title: 'Course to Delete' });
@@ -290,10 +331,11 @@ describe('Course Controller', () => {
     it('should delete course successfully', async () => {
       const res = await request(app)
         .delete(`/api/courses/${courseId}`)
+        .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.message).toContain('deleted successfully');
+      expect(res.body.data.message).toContain('deleted successfully');
 
       // Verify course is deleted
       const deletedCourse = await CourseModel.findById(courseId);
@@ -305,6 +347,7 @@ describe('Course Controller', () => {
 
       const res = await request(app)
         .delete(`/api/courses/${fakeId}`)
+        .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
 
       expect(res.body.success).toBe(false);

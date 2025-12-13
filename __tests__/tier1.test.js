@@ -122,11 +122,11 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.project.title).toBe('Portfolio Project');
-      expect(res.body.data.project.owner).toBe(user1Uid);
-      expect(res.body.data.project.status).toBe('active');
+      expect(res.body.data.title).toBe('Portfolio Project');
+      expect(res.body.data.owner).toBe(user1Uid);
+      expect(res.body.data.status).toBe('active');
 
-      projectId = res.body.data.project._id;
+      projectId = res.body.data._id;
     });
 
     test('Should fail to create project without authentication', async () => {
@@ -228,7 +228,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(403);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('permission');
+      expect(res.body.message).toContain('authorized');
     });
 
     test('Should fail to update project without authentication', async () => {
@@ -378,7 +378,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       expect(res.status).toBe(403);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('permission');
+      expect(res.body.message).toContain('authorized');
     });
 
     test('Should fail to update feedback without authentication', async () => {
@@ -516,7 +516,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
         });
 
       const deleteRes = await request(app)
-        .delete(`/projects/${createRes.body.data.project._id}`)
+        .delete(`/projects/${createRes.body.data._id}`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(deleteRes.status).toBe(200);
@@ -562,7 +562,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
           title: 'Rating Test Project'
         });
 
-      const newProjectId = projectRes.body.data.project._id;
+      const newProjectId = projectRes.body.data._id;
 
       // Test boundary values - each with different user
       const validRatings = [1, 2, 3, 4, 5];
@@ -601,7 +601,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
           title: 'Unique Feedback Test'
         });
 
-      const newProjectId = projectRes.body.data.project._id;
+      const newProjectId = projectRes.body.data._id;
 
       // First feedback should succeed
       const res1 = await request(app)

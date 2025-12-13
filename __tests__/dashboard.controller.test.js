@@ -101,7 +101,7 @@ describe('Dashboard Controller Tests', () => {
         tags: ['frontend', 'react']
       });
 
-    projectId1 = project1Res.body.data.project._id;
+    projectId1 = project1Res.body.data._id;
 
     const project2Res = await request(app)
       .post('/projects')
@@ -113,7 +113,7 @@ describe('Dashboard Controller Tests', () => {
         tags: ['python', 'pandas']
       });
 
-    projectId2 = project2Res.body.data.project._id;
+    projectId2 = project2Res.body.data._id;
 
     // User 2: Create project for user1 to feedback on
     const project3Res = await request(app)
@@ -124,7 +124,7 @@ describe('Dashboard Controller Tests', () => {
         description: 'Another project'
       });
 
-    const projectId3 = project3Res.body.data.project._id;
+    const projectId3 = project3Res.body.data._id;
 
     // User 1: Provide feedback on User 2's project
     const feedbackRes = await request(app)
@@ -477,7 +477,7 @@ describe('Dashboard Controller Tests', () => {
         .post('/feedback')
         .set('Authorization', `Bearer ${token2}`)
         .send({
-          projectId: projectRes.body.data.project._id,
+          projectId: projectRes.body.data._id,
           rating: 5,
           comment: 'Excellent!'
         });

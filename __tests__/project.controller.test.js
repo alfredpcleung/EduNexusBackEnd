@@ -77,17 +77,17 @@ describe('Project Controller Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.project).toBeDefined();
-      expect(res.body.data.project.title).toBe('Web Development Portfolio');
-      expect(res.body.data.project.description).toBe('Build a personal portfolio website');
-      expect(res.body.data.project.owner).toBe(user1Uid);
-      expect(res.body.data.project.tags).toEqual(['frontend', 'react', 'css']);
-      expect(res.body.data.project.status).toBe('active');
-      expect(res.body.data.project._id).toBeDefined();
-      expect(res.body.data.project.created).toBeDefined();
-      expect(res.body.data.project.updated).toBeDefined();
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data.title).toBe('Web Development Portfolio');
+      expect(res.body.data.description).toBe('Build a personal portfolio website');
+      expect(res.body.data.owner).toBe(user1Uid);
+      expect(res.body.data.tags).toEqual(['frontend', 'react', 'css']);
+      expect(res.body.data.status).toBe('active');
+      expect(res.body.data._id).toBeDefined();
+      expect(res.body.data.created).toBeDefined();
+      expect(res.body.data.updated).toBeDefined();
 
-      projectId1 = res.body.data.project._id;
+      projectId1 = res.body.data._id;
     });
 
     test('should set owner to authenticated user uid', async () => {
@@ -102,11 +102,11 @@ describe('Project Controller Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.project).toBeDefined();
-      expect(res.body.data.project.owner).toBe(user2Uid);
-      expect(res.body.data.project.owner).not.toBe(user1Uid);
+      expect(res.body.data).toBeDefined();
+      expect(res.body.data.owner).toBe(user2Uid);
+      expect(res.body.data.owner).not.toBe(user1Uid);
 
-      projectId2 = res.body.data.project._id;
+      projectId2 = res.body.data._id;
     });
 
     test('should default tags to empty array if not provided', async () => {
@@ -120,8 +120,8 @@ describe('Project Controller Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.data.project.tags)).toBe(true);
-      expect(res.body.data.project.tags.length).toBe(0);
+      expect(Array.isArray(res.body.data.tags)).toBe(true);
+      expect(res.body.data.tags.length).toBe(0);
     });
 
     test('should default status to active if not provided', async () => {
@@ -134,7 +134,7 @@ describe('Project Controller Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.project.status).toBe('active');
+      expect(res.body.data.status).toBe('active');
     });
 
     test('should fail without authentication', async () => {
@@ -187,7 +187,7 @@ describe('Project Controller Tests', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.project.courseId).toBe('course123');
+      expect(res.body.data.courseId).toBe('course123');
     });
   });
 
@@ -413,7 +413,7 @@ describe('Project Controller Tests', () => {
 
       expect(res.status).toBe(403);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('permission');
+      expect(res.body.message).toContain('authorized');
     });
 
     test('should return 401 when not authenticated', async () => {
@@ -478,7 +478,7 @@ describe('Project Controller Tests', () => {
           description: 'Will be deleted'
         });
 
-      const projectIdToDelete = createRes.body.data.project._id;
+      const projectIdToDelete = createRes.body.data._id;
 
       // Verify it exists
       const getRes = await request(app)
@@ -492,7 +492,7 @@ describe('Project Controller Tests', () => {
 
       expect(deleteRes.status).toBe(200);
       expect(deleteRes.body.success).toBe(true);
-      expect(deleteRes.body.message).toContain('deleted');
+      expect(deleteRes.body.data.message).toContain('deleted');
 
       // Verify it's gone
       const getAfterDelete = await request(app)
@@ -507,7 +507,7 @@ describe('Project Controller Tests', () => {
 
       expect(res.status).toBe(403);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('permission');
+      expect(res.body.message).toContain('authorized');
 
       // Verify it still exists
       const getRes = await request(app)

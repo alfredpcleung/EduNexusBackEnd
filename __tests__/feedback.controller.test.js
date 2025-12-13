@@ -79,7 +79,7 @@ describe('Feedback Controller Tests', () => {
         status: 'active'
       });
 
-    projectId1 = project1Res.body.data.project._id;
+    projectId1 = project1Res.body.data._id;
 
     const project2Res = await request(app)
       .post('/projects')
@@ -90,7 +90,7 @@ describe('Feedback Controller Tests', () => {
         status: 'active'
       });
 
-    projectId2 = project2Res.body.data.project._id;
+    projectId2 = project2Res.body.data._id;
   });
 
   afterAll(async () => {
@@ -354,7 +354,7 @@ describe('Feedback Controller Tests', () => {
           description: 'Will have no feedback'
         });
 
-      const projectId = projectRes.body.data.project._id;
+      const projectId = projectRes.body.data._id;
 
       const res = await request(app)
         .get(`/feedback?projectId=${projectId}`);
@@ -463,7 +463,7 @@ describe('Feedback Controller Tests', () => {
 
       expect(res.status).toBe(403);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('permission');
+      expect(res.body.message).toContain('authorized');
     });
 
     test('should return 401 when not authenticated', async () => {
@@ -515,7 +515,7 @@ describe('Feedback Controller Tests', () => {
           title: 'Delete Test Project'
         });
 
-      const testProjectId = newProjectRes.body.data.project._id;
+      const testProjectId = newProjectRes.body.data._id;
 
       // Create feedback to delete
       const createRes = await request(app)
@@ -543,7 +543,7 @@ describe('Feedback Controller Tests', () => {
 
       expect(deleteRes.status).toBe(200);
       expect(deleteRes.body.success).toBe(true);
-      expect(deleteRes.body.message).toContain('deleted');
+      expect(deleteRes.body.data.message).toContain('deleted');
 
       // Verify it's gone
       const getAfterDelete = await request(app)
@@ -564,7 +564,7 @@ describe('Feedback Controller Tests', () => {
           title: 'Delete Prevention Test Project'
         });
 
-      const testProjectId = newProjectRes.body.data.project._id;
+      const testProjectId = newProjectRes.body.data._id;
 
       // Create feedback as token1
       const createRes = await request(app)
@@ -585,7 +585,7 @@ describe('Feedback Controller Tests', () => {
 
       expect(res.status).toBe(403);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('permission');
+      expect(res.body.message).toContain('authorized');
 
       // Verify it still exists
       const getRes = await request(app)
@@ -629,7 +629,7 @@ describe('Feedback Controller Tests', () => {
 
       const res = await request(app)
         .post('/feedback')
-        .set('Authorization', `Bearer ${newUser.body.token}`)
+        .set('Authorization', `Bearer ${newUser.body.data.token}`)
         .send({
           projectId: projectId2,
           rating: 4,
@@ -653,7 +653,7 @@ describe('Feedback Controller Tests', () => {
 
       const res = await request(app)
         .post('/feedback')
-        .set('Authorization', `Bearer ${newUser.body.token}`)
+        .set('Authorization', `Bearer ${newUser.body.data.token}`)
         .send({
           projectId: projectId2,
           rating: 5,
@@ -747,12 +747,12 @@ describe('Feedback Controller Tests', () => {
           title: 'Unique Test Project'
         });
 
-      const newProjectId = newProject.body.project._id;
+      const newProjectId = newProject.body.data._id;
 
       // First feedback succeeds
       const res1 = await request(app)
         .post('/feedback')
-        .set('Authorization', `Bearer ${uniqueTestUser.body.token}`)
+        .set('Authorization', `Bearer ${uniqueTestUser.body.data.token}`)
         .send({
           projectId: newProjectId,
           rating: 3
@@ -763,7 +763,7 @@ describe('Feedback Controller Tests', () => {
       // Duplicate feedback fails
       const res2 = await request(app)
         .post('/feedback')
-        .set('Authorization', `Bearer ${uniqueTestUser.body.token}`)
+        .set('Authorization', `Bearer ${uniqueTestUser.body.data.token}`)
         .send({
           projectId: newProjectId,
           rating: 4

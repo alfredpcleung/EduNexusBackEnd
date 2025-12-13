@@ -48,6 +48,9 @@ module.exports.LisByID = async function (req, res, next) {
 }
 
 module.exports.read = async function (req, res, next) {
+    if (!req.user) {
+        return errorResponse(res, 404, "User not found");
+    }
     res.json({
         success: true,
         data: req.user
