@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
+const User = require('../Models/user');
 const errorResponse = require('../Utils/errorResponse');
 
-// Middleware to verify JWT token
-module.exports.requireAuth = (req, res, next) => {
+// Middleware to verify JWT token and fetch user role
+module.exports.requireAuth = async (req, res, next) => {
     try {
         // Get token from Authorization header
         const token = req.headers.authorization?.split(' ')[1];
@@ -13,7 +14,21 @@ module.exports.requireAuth = (req, res, next) => {
 
         // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
+        
+        // Fetch user from database to get role
+        const user = await User.findOne({ uid: decoded.uid }, 'uid role');
+        if (!user) {
+            return errorResponse(res, 401, "User not found. Please authenticate again.");
+        }
+        
+        // Set req.user with both JWT payload and database role
+        req.user = {
+            userId: decoded.userId,
+            uid: decoded.uid,
+            email: decoded.email,
+            role: user.role  // ← NOW includes role from database
+        };
+        
         next();
 
     } catch (error) {
