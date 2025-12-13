@@ -14,11 +14,11 @@ let testEmail = 'testuser@example.com';
 let testPassword = 'TestPassword123';
 
 // Import models and routers
-const UserModel = require('../App/Models/user');
-const CourseModel = require('../App/Models/course');
-const authRouter = require('../App/Routers/auth');
-const userRouter = require('../App/Routers/user');
-const courseRouter = require('../App/Routers/course');
+const UserModel = require('../app/Models/user');
+const CourseModel = require('../app/Models/course');
+const authRouter = require('../app/Routers/auth');
+const userRouter = require('../app/Routers/user');
+const courseRouter = require('../app/Routers/course');
 
 describe('Authentication & CRUD Tests', () => {
   beforeAll(async () => {

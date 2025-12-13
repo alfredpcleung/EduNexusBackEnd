@@ -1,14 +1,14 @@
 const request = require('supertest');
 const express = require('express');
 const mongoose = require('mongoose');
-const configDb = require('../Config/db.js');
+const configDb = require('../config/db.js');
 
 // Import routers and models
-const authRouter = require('../App/Routers/auth');
-const userRouter = require('../App/Routers/user');
-const projectRouter = require('../App/Routers/project');
-const User = require('../App/Models/user');
-const Project = require('../App/Models/project');
+const authRouter = require('../app/Routers/auth');
+const userRouter = require('../app/Routers/user');
+const projectRouter = require('../app/Routers/project');
+const User = require('../app/Models/user');
+const Project = require('../app/Models/project');
 
 // Setup Express app for testing
 const app = express();

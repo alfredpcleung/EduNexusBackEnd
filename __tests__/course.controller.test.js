@@ -3,13 +3,13 @@ const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const CourseModel = require('../App/Models/course');
-const UserModel = require('../App/Models/user');
-const courseRouter = require('../App/Routers/course');
-const authRouter = require('../App/Routers/auth');
+const CourseModel = require('../app/Models/course');
+const UserModel = require('../app/Models/user');
+const courseRouter = require('../app/Routers/course');
+const authRouter = require('../app/Routers/auth');
 
 // Mock MongoDB connection
-jest.mock('../Config/db.js', () => jest.fn());
+jest.mock('../config/db.js', () => jest.fn());
 
 describe('Course Controller - New Schema', () => {
   let app;

@@ -3,17 +3,17 @@ const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const CourseModel = require('../App/Models/course');
-const ReviewModel = require('../App/Models/review');
-const UserModel = require('../App/Models/user');
-const courseRouter = require('../App/Routers/course');
-const reviewRouter = require('../App/Routers/review');
-const authRouter = require('../App/Routers/auth');
-const userRouter = require('../App/Routers/user');
-const { REVIEW_TAGS, MIN_REVIEWS_FOR_AGGREGATES } = require('../App/Constants/reviewTags');
+const CourseModel = require('../app/Models/course');
+const ReviewModel = require('../app/Models/review');
+const UserModel = require('../app/Models/user');
+const courseRouter = require('../app/Routers/course');
+const reviewRouter = require('../app/Routers/review');
+const authRouter = require('../app/Routers/auth');
+const userRouter = require('../app/Routers/user');
+const { REVIEW_TAGS, MIN_REVIEWS_FOR_AGGREGATES } = require('../app/Constants/reviewTags');
 
 // Mock MongoDB connection
-jest.mock('../Config/db.js', () => jest.fn());
+jest.mock('../config/db.js', () => jest.fn());
 
 describe('Review Controller', () => {
   let app;

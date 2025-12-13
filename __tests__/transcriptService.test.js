@@ -13,7 +13,7 @@ const {
   GPA_SCHEMES,
   EXCLUDED_GRADES,
   DEFAULT_SCHEME
-} = require('../App/Services/transcriptService');
+} = require('../app/Services/transcriptService');
 
 describe('Transcript Service - GPA Calculation', () => {
   

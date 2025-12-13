@@ -13,11 +13,11 @@
   "license": "ISC",
   "author": "Group6",
   "type": "commonjs",
-  "main": "Server.js",
+  "main": "server.js",
   "scripts": {
     "test": "jest --detectOpenHandles",
     "test:watch": "jest --watch",
-    "start": "node Server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

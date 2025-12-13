@@ -3,13 +3,13 @@ const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const UserController = require('../App/Controllers/user');
-const UserModel = require('../App/Models/user');
-const userRouter = require('../App/Routers/user');
-const authRouter = require('../App/Routers/auth');
+const UserController = require('../app/Controllers/user');
+const UserModel = require('../app/Models/user');
+const userRouter = require('../app/Routers/user');
+const authRouter = require('../app/Routers/auth');
 
 // Mock MongoDB connection
-jest.mock('../Config/db.js', () => jest.fn());
+jest.mock('../config/db.js', () => jest.fn());
 
 describe('User Controller', () => {
   let app;

@@ -1,19 +1,19 @@
 const request = require('supertest');
 const express = require('express');
 const mongoose = require('mongoose');
-const configDb = require('../Config/db.js');
+const configDb = require('../config/db.js');
 
 // Import routers and models
-const authRouter = require('../App/Routers/auth');
-const userRouter = require('../App/Routers/user');
-const courseRouter = require('../App/Routers/course');
-const projectRouter = require('../App/Routers/project');
-const feedbackRouter = require('../App/Routers/feedback');
-const dashboardRouter = require('../App/Routers/dashboard');
-const User = require('../App/Models/user');
-const Course = require('../App/Models/course');
-const Project = require('../App/Models/project');
-const Feedback = require('../App/Models/feedback');
+const authRouter = require('../app/Routers/auth');
+const userRouter = require('../app/Routers/user');
+const courseRouter = require('../app/Routers/course');
+const projectRouter = require('../app/Routers/project');
+const feedbackRouter = require('../app/Routers/feedback');
+const dashboardRouter = require('../app/Routers/dashboard');
+const User = require('../app/Models/user');
+const Course = require('../app/Models/course');
+const Project = require('../app/Models/project');
+const Feedback = require('../app/Models/feedback');
 
 // Setup Express app for testing
 const app = express();
