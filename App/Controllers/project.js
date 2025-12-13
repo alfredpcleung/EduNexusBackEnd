@@ -101,6 +101,7 @@ exports.updateProject = async (req, res) => {
   try {
     const { projectId } = req.params;
     const ownerUid = req.user.uid;
+    const userRole = req.user.role;
     const { title, description, tags, status } = req.body;
 
     const project = await Project.findById(projectId);
@@ -108,8 +109,8 @@ exports.updateProject = async (req, res) => {
       return errorResponse(res, 404, 'Project not found');
     }
 
-    // Check ownership
-    if (project.owner !== ownerUid) {
+    // Check ownership - admin users bypass this check
+    if (userRole !== 'admin' && project.owner !== ownerUid) {
       return errorResponse(res, 403, 'You are not authorized to perform this action');
     }
 
@@ -143,14 +144,15 @@ exports.deleteProject = async (req, res) => {
   try {
     const { projectId } = req.params;
     const ownerUid = req.user.uid;
+    const userRole = req.user.role;
 
     const project = await Project.findById(projectId);
     if (!project) {
       return errorResponse(res, 404, 'Project not found');
     }
 
-    // Check ownership
-    if (project.owner !== ownerUid) {
+    // Check ownership - admin users bypass this check
+    if (userRole !== 'admin' && project.owner !== ownerUid) {
       return errorResponse(res, 403, 'You are not authorized to perform this action');
     }
 

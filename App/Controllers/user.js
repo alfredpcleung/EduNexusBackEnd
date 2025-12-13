@@ -70,15 +70,26 @@ module.exports.SetUserByUID = async function (req, res, next) {
 
 module.exports.update = async function (req, res, next) {
     try {
+        const targetUid = req.params.uid;
+        const currentUserUid = req.user?.uid;
+        const userRole = req.user?.role;
+
+        // Check if user exists first before authorization
+        const existingUser = await UserModel.findOne({ uid: targetUid });
+        if (!existingUser) {
+            return errorResponse(res, 404, "User not found");
+        }
+
+        // Check authorization - allow if admin or updating own profile
+        if (userRole !== 'admin' && currentUserUid !== targetUid) {
+            return errorResponse(res, 403, "You are not authorized to perform this action");
+        }
+
         let result = await UserModel.findOneAndUpdate(
-            { uid: req.params.uid },
+            { uid: targetUid },
             { $set: req.body },
             { new: true, runValidators: true }
         );
-
-        if (!result) {
-            return errorResponse(res, 404, "User not found");
-        }
 
         res.json({
             success: true,
@@ -92,7 +103,22 @@ module.exports.update = async function (req, res, next) {
 
 module.exports.delete = async function (req, res, next) {
     try {
-        let result = await UserModel.deleteOne({ uid: req.params.uid });
+        const targetUid = req.params.uid;
+        const currentUserUid = req.user?.uid;
+        const userRole = req.user?.role;
+
+        // Check if user exists first before authorization
+        const existingUser = await UserModel.findOne({ uid: targetUid });
+        if (!existingUser) {
+            return errorResponse(res, 404, "User not found");
+        }
+
+        // Check authorization - allow if admin or deleting own profile
+        if (userRole !== 'admin' && currentUserUid !== targetUid) {
+            return errorResponse(res, 403, "You are not authorized to perform this action");
+        }
+
+        let result = await UserModel.deleteOne({ uid: targetUid });
         if (result.deletedCount > 0) {
             res.json({
                 success: true,

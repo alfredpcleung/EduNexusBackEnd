@@ -96,6 +96,7 @@ exports.updateFeedback = async (req, res) => {
   try {
     const { feedbackId } = req.params;
     const authorUid = req.user.uid;
+    const userRole = req.user.role;
     const { rating, comment } = req.body;
 
     const feedback = await Feedback.findById(feedbackId);
@@ -103,8 +104,8 @@ exports.updateFeedback = async (req, res) => {
       return errorResponse(res, 404, 'Feedback not found');
     }
 
-    // Check authorship
-    if (feedback.authorId !== authorUid) {
+    // Check authorship - admin users bypass this check
+    if (userRole !== 'admin' && feedback.authorId !== authorUid) {
       return errorResponse(res, 403, 'You are not authorized to perform this action');
     }
 
@@ -141,14 +142,15 @@ exports.deleteFeedback = async (req, res) => {
   try {
     const { feedbackId } = req.params;
     const authorUid = req.user.uid;
+    const userRole = req.user.role;
 
     const feedback = await Feedback.findById(feedbackId);
     if (!feedback) {
       return errorResponse(res, 404, 'Feedback not found');
     }
 
-    // Check authorship
-    if (feedback.authorId !== authorUid) {
+    // Check authorship - admin users bypass this check
+    if (userRole !== 'admin' && feedback.authorId !== authorUid) {
       return errorResponse(res, 403, 'You are not authorized to perform this action');
     }
 
