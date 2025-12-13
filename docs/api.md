@@ -238,6 +238,60 @@ Get user's dashboard with enrolled courses, reviews, projects, and feedback.
 
 ---
 
+### Stats (Public)
+
+Homepage metrics endpoints. No authentication required.
+
+#### GET /stats/registered-students
+Count of users with role "Student".
+
+```json
+// Response 200
+{ "success": true, "data": { "registeredStudents": 150 } }
+```
+
+#### GET /stats/courses-with-reviews
+Count of unique courses that have at least one review.
+
+```json
+// Response 200
+{ "success": true, "data": { "coursesWithReviews": 42 } }
+```
+
+#### GET /stats/active-students
+Count of students active in last 90 days (logged in OR created content).
+
+```json
+// Response 200
+{ "success": true, "data": { "activeStudents": 87 } }
+```
+
+#### GET /stats/projects-recruiting
+Count of approved projects currently recruiting members.
+
+```json
+// Response 200
+{ "success": true, "data": { "projectsRecruiting": 15 } }
+```
+
+#### GET /stats/all
+All metrics in a single request.
+
+```json
+// Response 200
+{
+  "success": true,
+  "data": {
+    "registeredStudents": 150,
+    "coursesWithReviews": 42,
+    "activeStudents": 87,
+    "projectsRecruiting": 15
+  }
+}
+```
+
+---
+
 ## Error Responses
 
 | Code | Meaning |

@@ -3,19 +3,11 @@ const User = require('../Models/user');
 const errorResponse = require('../Utils/errorResponse');
 
 /**
- * Helper: Populate author displayName for feedback items
+ * Helper: Build display name from firstName and lastName
  */
-const populateAuthorDisplayName = async (feedbackItems) => {
-  const isArray = Array.isArray(feedbackItems);
-  const items = isArray ? feedbackItems : [feedbackItems];
-  
-  for (let item of items) {
-    const author = await User.findOne({ uid: item.authorId }, 'displayName');
-    item = item.toObject ? item.toObject() : item;
-    item.author = author ? { displayName: author.displayName, uid: item.authorId } : { displayName: 'Unknown', uid: item.authorId };
-  }
-  
-  return isArray ? items : items[0];
+const buildDisplayName = (user) => {
+  if (!user) return 'Unknown';
+  return `${user.firstName} ${user.lastName}`.trim() || 'Unknown';
 };
 
 /**
@@ -36,11 +28,11 @@ exports.listFeedback = async (req, res) => {
 
     let feedback = await Feedback.find(filter).sort({ created: -1 });
     
-    // Populate author displayName for each feedback
+    // Populate author name for each feedback
     for (let i = 0; i < feedback.length; i++) {
-      const author = await User.findOne({ uid: feedback[i].authorId }, 'displayName');
+      const author = await User.findOne({ uid: feedback[i].authorId }, 'firstName lastName');
       feedback[i] = feedback[i].toObject();
-      feedback[i].author = author ? { displayName: author.displayName, uid: feedback[i].authorId } : { displayName: 'Unknown', uid: feedback[i].authorId };
+      feedback[i].author = { displayName: buildDisplayName(author), uid: feedback[i].authorId };
     }
     
     res.status(200).json({
@@ -96,10 +88,10 @@ exports.createFeedback = async (req, res) => {
 
     await newFeedback.save();
     
-    // Populate author displayName
-    const author = await User.findOne({ uid: authorUid }, 'displayName');
+    // Populate author name
+    const author = await User.findOne({ uid: authorUid }, 'firstName lastName');
     const feedbackData = newFeedback.toObject();
-    feedbackData.author = author ? { displayName: author.displayName, uid: authorUid } : { displayName: 'Unknown', uid: authorUid };
+    feedbackData.author = { displayName: buildDisplayName(author), uid: authorUid };
     
     res.status(201).json({
       success: true,
@@ -154,10 +146,10 @@ exports.updateFeedback = async (req, res) => {
     feedback.updated = new Date();
     await feedback.save();
 
-    // Populate author displayName
-    const author = await User.findOne({ uid: feedback.authorId }, 'displayName');
+    // Populate author name
+    const author = await User.findOne({ uid: feedback.authorId }, 'firstName lastName');
     const feedbackData = feedback.toObject();
-    feedbackData.author = author ? { displayName: author.displayName, uid: feedback.authorId } : { displayName: 'Unknown', uid: feedback.authorId };
+    feedbackData.author = { displayName: buildDisplayName(author), uid: feedback.authorId };
 
     res.status(200).json({
       success: true,

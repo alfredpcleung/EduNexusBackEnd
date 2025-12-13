@@ -135,6 +135,16 @@ GPA calculations with global grade scale support.
 ### ReviewService
 Calculates course aggregates (avgDifficulty, topTags, etc.) after review CRUD operations.
 
+### StatsService
+Homepage metrics calculations (implemented in controller):
+
+| Metric | Calculation |
+|--------|-------------|
+| Registered Students | `User.countDocuments({ role: 'Student' })` |
+| Courses with Reviews | `Review.distinct('course').length` |
+| Active Students | Students who logged in OR created content (review/project/feedback) in last 90 days |
+| Projects Recruiting | `Project.countDocuments({ status: 'approved', recruiting: true })` |
+
 ---
 
 ## Authorization Rules
@@ -160,3 +170,21 @@ Calculates course aggregates (avgDifficulty, topTags, etc.) after review CRUD op
 | 403 | Not authorized (ownership) |
 | 404 | Not found |
 | 409 | Duplicate |
+
+---
+
+### User Model Updates (2025-12)
+
+#### Deprecated Fields
+- The `displayName` field has been removed from the `User` model. This field was previously used for user display purposes but is now deprecated.
+- Legacy fields such as `admin` (boolean) have also been removed.
+
+#### Role-Specific Field Requirements
+- **Admin Users**:
+  - Retain only the following fields: `uid`, `email`, `role`, `firstName`, `lastName`, `bio`, `created`, `updated`, `profilePic`, and optional links (`github`, `linkedin`, `personalWebsite`).
+  - Fields like `schoolName`, `programName`, `academicRecords`, and `enrolledCourses` are removed.
+- **Student Users**:
+  - Ensure `schoolName` and `programName` are present and non-empty. Default values (`Unknown School`, `Unknown Program`) are set if missing.
+  - Fields like `academicRecords` and `enrolledCourses` remain intact.
+
+This migration ensures that all user records align with the latest `UserSchema`.

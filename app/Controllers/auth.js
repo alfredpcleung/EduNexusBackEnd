@@ -106,6 +106,10 @@ module.exports.signin = async function (req, res, next) {
             return errorResponse(res, 401, "Invalid email or password");
         }
 
+        // Update lastLogin timestamp
+        user.lastLogin = new Date();
+        await user.save();
+
         // Generate JWT token
         const token = generateToken({ 
             userId: user._id,

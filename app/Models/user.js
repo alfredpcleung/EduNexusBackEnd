@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const bcrypt = require('bcrypt');
+const AuditLog = require('./auditLog');
 
 // Academic Record Schema for student transcript (globally compatible)
 const AcademicRecordSchema = new Schema(
@@ -60,22 +61,35 @@ const UserSchema = new Schema(
       enum: ["student", "admin"], 
       default: "student" 
     },
-    firstName: { type: String, required: true },               // First name
-    lastName: { type: String, required: true },                // Last name
-    schoolName: { type: String },                              // School/Institution (required for students)
-    programName: { type: String },                             // Major/Field of Study/Program (required for students, globally flexible)
-    github: { type: String },                                  // GitHub profile URL
-    personalWebsite: { type: String },                         // Personal website/portfolio URL
-    linkedin: { type: String },                                // LinkedIn profile
-    bio: { type: String },                                     // Short biography
-    profilePic: { type: String },                              // URL to avatar
-    enrolledCourses: { type: [String], default: [] },          // Array of course IDs
-    academicRecords: { type: [AcademicRecordSchema], default: [] }, // Student academic transcript
+    firstName: { type: String, required: true, maxlength: 50 },               // First name
+    lastName: { type: String, required: true, maxlength: 50 },                // Last name
+    schoolName: { type: String, required: function() { return this.role === 'student'; }, maxlength: 50 }, // School/Institution
+    programName: { type: String, required: function() { return this.role === 'student'; }, maxlength: 50 }, // Major/Field of Study
+    github: { 
+      type: String, 
+      match: [/^https:\/\/github\.com\/[a-zA-Z0-9_-]+$/, "GitHub URL must match the pattern https://github.com/username"] 
+    },
+    personalWebsite: { 
+      type: String, 
+      match: [/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/, "Please provide a valid URL"] 
+    },
+    linkedin: { 
+      type: String, 
+      match: [/^https:\/\/www\.linkedin\.com\/in\/[a-zA-Z0-9_-]+$/, "LinkedIn URL must match the pattern https://www.linkedin.com/in/username"] 
+    },
+    bio: { type: String, maxlength: 500 },                                     // Short biography
+    profilePic: { type: String },                                              // URL to avatar
+    enrolledCourses: { type: [String], default: [] },                          // Array of course IDs
+    academicRecords: { type: [AcademicRecordSchema], default: [] },            // Student academic transcript
+    lastLogin: { type: Date, default: null },                                  // Last successful login timestamp
     created: { type: Date, default: Date.now, immutable: true },
     updated: { type: Date, default: Date.now }
   },
   { collection: "users" }
 );
+
+// Index for active students query (lastLogin within 90 days)
+UserSchema.index({ role: 1, lastLogin: -1 });
 
 // Validate role-specific required fields and handle email domain enforcement
 UserSchema.pre('save', async function (next) {
@@ -105,6 +119,33 @@ UserSchema.pre('save', async function (next) {
 
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+UserSchema.pre('save', async function (next) {
+  try {
+    if (!this.isModified()) return next();
+
+    const modifiedFields = this.modifiedPaths();
+    const changes = {};
+
+    modifiedFields.forEach(field => {
+      changes[field] = {
+        old: this.get(field, null, { getters: false }),
+        new: this[field]
+      };
+    });
+
+    await AuditLog.create({
+      userId: this._id,
+      changes,
+      action: 'profile_update',
+      timestamp: new Date()
+    });
+
     next();
   } catch (error) {
     next(error);

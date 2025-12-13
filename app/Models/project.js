@@ -13,6 +13,7 @@ const ProjectSchema = new Schema(
       enum: ["active", "archived", "draft"],
       default: "active"
     },
+    recruiting: { type: Boolean, default: false },             // Whether project is recruiting members
     created: { type: Date, default: Date.now, immutable: true },
     updated: { type: Date, default: Date.now }
   },
@@ -22,6 +23,8 @@ const ProjectSchema = new Schema(
 // Index for owner queries and courseId queries
 ProjectSchema.index({ owner: 1 });
 ProjectSchema.index({ courseId: 1 });
+// Index for recruiting projects query
+ProjectSchema.index({ status: 1, recruiting: 1 });
 
 ProjectSchema.set('toJSON', {
   virtuals: true,

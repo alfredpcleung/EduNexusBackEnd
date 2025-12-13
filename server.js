@@ -12,6 +12,7 @@ var projectRouter = require('./app/Routers/project.js');
 var feedbackRouter = require('./app/Routers/feedback.js');
 var dashboardRouter = require('./app/Routers/dashboard.js');
 var reviewRouter = require('./app/Routers/review.js');
+var statsRouter = require('./app/Routers/stats.js');
 
 var app = Express();
 configDb();
@@ -28,6 +29,7 @@ app.use('/api/projects', projectRouter);
 app.use('/api/feedback', feedbackRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/reviews', reviewRouter);
+app.use('/api/stats', statsRouter);
 
 app.use(function(req, res, next) {
   next(createError(404));
