@@ -10,8 +10,7 @@ A secure Node.js/Express backend for the EduNexus educational platform with JWT 
 
 ## Quick Navigation
 
-📚 **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Complete API reference with request/response examples, authentication, configuration, and troubleshooting  
-🧪 **[TESTING_AND_IMPLEMENTATION.md](TESTING_AND_IMPLEMENTATION.md)** - Test coverage details (193 tests), Tier 1 implementation, data models, and endpoints
+📚 **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Full API reference with endpoints, auth, and request/response examples
 
 ---
 
@@ -43,8 +42,10 @@ A secure Node.js/Express backend for the EduNexus educational platform with JWT 
 - Create, read, update, delete feedback on projects
 - 1-5 star rating system
 - Comment support
+- Author displayName included in all feedback responses (no extra lookups needed)
 - Unique feedback per author per project (compound index)
 - Only feedback authors can modify/delete their feedback
+- Admin users can manage any feedback
 
 ✅ **User Dashboard**
 - Aggregated user data (courses, projects, feedback)

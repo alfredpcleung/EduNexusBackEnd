@@ -757,6 +757,10 @@ Authorization: Bearer <token>
       "_id": "507f1f77bcf86cd799439014",
       "projectId": "project_id_here",
       "authorId": "user_uid_here",
+      "author": {
+        "displayName": "John Doe",
+        "uid": "user_uid_here"
+      },
       "rating": 4,
       "comment": "Great project!",
       "created": "2024-12-11T10:30:00Z",
@@ -766,6 +770,8 @@ Authorization: Bearer <token>
   "count": 3
 }
 ```
+
+**Note:** The `author` object includes `displayName` for easy display in frontend without additional API calls.
 
 ---
 
@@ -795,6 +801,10 @@ Content-Type: application/json
     "_id": "507f1f77bcf86cd799439014",
     "projectId": "project_id_here",
     "authorId": "authenticated_user_uid",
+    "author": {
+      "displayName": "John Doe",
+      "uid": "authenticated_user_uid"
+    },
     "rating": 4,
     "comment": "Great project!",
     "created": "2024-12-11T10:30:00Z",
@@ -836,6 +846,12 @@ Content-Type: application/json
   "success": true,
   "data": {
     "_id": "507f1f77bcf86cd799439014",
+    "projectId": "project_id_here",
+    "authorId": "authenticated_user_uid",
+    "author": {
+      "displayName": "John Doe",
+      "uid": "authenticated_user_uid"
+    },
     "rating": 5,
     "comment": "Actually, this was excellent!",
     "updated": "2024-12-11T11:30:00Z"
