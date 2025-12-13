@@ -13,9 +13,9 @@ const Project = require('../App/Models/project');
 // Setup Express app for testing
 const app = express();
 app.use(express.json());
-app.use('/auth', authRouter);
-app.use('/users', userRouter);
-app.use('/projects', projectRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
+app.use('/api/projects', projectRouter);
 
 // Test data
 let token1, token2, user1Uid, user2Uid, projectId1, projectId2;
@@ -32,22 +32,30 @@ describe('Project Controller Tests', () => {
 
     // Create test users
     const signup1 = await request(app)
-      .post('/auth/signup')
+      .post('/api/auth/signup')
       .send({
-        displayName: 'Project Owner 1',
+        firstName: 'Project',
+        lastName: 'Owner1',
         email: 'projectowner1@test.com',
-        password: 'password123'
+        password: 'password123',
+        role: 'student',
+        schoolName: 'Test University',
+        programName: 'Computer Science'
       });
 
     token1 = signup1.body.data.token;
     user1Uid = signup1.body.data.user.uid;
 
     const signup2 = await request(app)
-      .post('/auth/signup')
+      .post('/api/auth/signup')
       .send({
-        displayName: 'Project Owner 2',
+        firstName: 'Project',
+        lastName: 'Owner2',
         email: 'projectowner2@test.com',
-        password: 'password456'
+        password: 'password456',
+        role: 'student',
+        schoolName: 'Test University',
+        programName: 'Computer Science'
       });
 
     token2 = signup2.body.data.token;
@@ -61,12 +69,12 @@ describe('Project Controller Tests', () => {
     await mongoose.connection.close();
   });
 
-  // ===== POST /projects - Create Project =====
-  describe('POST /projects - Create Project', () => {
+  // ===== POST /api/projects - Create Project =====
+  describe('POST /api/projects - Create Project', () => {
 
     test('should create a project with valid body', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Web Development Portfolio',
@@ -92,7 +100,7 @@ describe('Project Controller Tests', () => {
 
     test('should set owner to authenticated user uid', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token2}`)
         .send({
           title: 'Machine Learning Project',
@@ -111,7 +119,7 @@ describe('Project Controller Tests', () => {
 
     test('should default tags to empty array if not provided', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Simple Project',
@@ -126,7 +134,7 @@ describe('Project Controller Tests', () => {
 
     test('should default status to active if not provided', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Default Status Project'
@@ -139,7 +147,7 @@ describe('Project Controller Tests', () => {
 
     test('should fail without authentication', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .send({
           title: 'Unauthorized Project',
           description: 'Should fail'
@@ -151,7 +159,7 @@ describe('Project Controller Tests', () => {
 
     test('should fail without title', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           description: 'Missing title'
@@ -164,7 +172,7 @@ describe('Project Controller Tests', () => {
 
     test('should fail with invalid status enum value', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Invalid Status Project',
@@ -177,7 +185,7 @@ describe('Project Controller Tests', () => {
 
     test('should accept optional courseId', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Course Project',
@@ -191,12 +199,12 @@ describe('Project Controller Tests', () => {
     });
   });
 
-  // ===== GET /projects - List Projects =====
-  describe('GET /projects - List Projects', () => {
+  // ===== GET /api/projects - List Projects =====
+  describe('GET /api/projects - List Projects', () => {
 
     test('should return all projects as array', async () => {
       const res = await request(app)
-        .get('/projects');
+        .get('/api/projects');
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -207,7 +215,7 @@ describe('Project Controller Tests', () => {
 
     test('should include created project in list', async () => {
       const res = await request(app)
-        .get('/projects');
+        .get('/api/projects');
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -219,7 +227,7 @@ describe('Project Controller Tests', () => {
 
     test('should filter projects by owner', async () => {
       const res = await request(app)
-        .get(`/projects?owner=${user1Uid}`);
+        .get(`/api/projects?owner=${user1Uid}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -232,7 +240,7 @@ describe('Project Controller Tests', () => {
 
     test('should filter projects by status', async () => {
       const res = await request(app)
-        .get('/projects?status=active');
+        .get('/api/projects?status=active');
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -245,7 +253,7 @@ describe('Project Controller Tests', () => {
 
     test('should filter projects by courseId', async () => {
       const res = await request(app)
-        .get('/projects?courseId=course123');
+        .get('/api/projects?courseId=course123');
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -260,7 +268,7 @@ describe('Project Controller Tests', () => {
 
     test('should return empty array with non-matching filter', async () => {
       const res = await request(app)
-        .get('/projects?status=nonexistent');
+        .get('/api/projects?status=nonexistent');
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -270,7 +278,7 @@ describe('Project Controller Tests', () => {
 
     test('should combine multiple filters', async () => {
       const res = await request(app)
-        .get(`/projects?owner=${user1Uid}&status=active`);
+        .get(`/api/projects?owner=${user1Uid}&status=active`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -282,12 +290,12 @@ describe('Project Controller Tests', () => {
     });
   });
 
-  // ===== GET /projects/:id - Get Single Project =====
-  describe('GET /projects/:id - Get Single Project', () => {
+  // ===== GET /api/projects/:id - Get Single Project =====
+  describe('GET /api/projects/:id - Get Single Project', () => {
 
     test('should return correct project by id', async () => {
       const res = await request(app)
-        .get(`/projects/${projectId1}`);
+        .get(`/api/projects/${projectId1}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -299,7 +307,7 @@ describe('Project Controller Tests', () => {
 
     test('should return project with all fields', async () => {
       const res = await request(app)
-        .get(`/projects/${projectId1}`);
+        .get(`/api/projects/${projectId1}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -317,7 +325,7 @@ describe('Project Controller Tests', () => {
 
     test('should return 404 for non-existent project', async () => {
       const res = await request(app)
-        .get('/projects/507f1f77bcf86cd799439011');
+        .get('/api/projects/507f1f77bcf86cd799439011');
 
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
@@ -326,10 +334,10 @@ describe('Project Controller Tests', () => {
 
     test('should return different projects correctly', async () => {
       const res1 = await request(app)
-        .get(`/projects/${projectId1}`);
+        .get(`/api/projects/${projectId1}`);
 
       const res2 = await request(app)
-        .get(`/projects/${projectId2}`);
+        .get(`/api/projects/${projectId2}`);
 
       expect(res1.body.data._id.toString()).toBe(projectId1.toString());
       expect(res2.body.data._id.toString()).toBe(projectId2.toString());
@@ -338,12 +346,12 @@ describe('Project Controller Tests', () => {
     });
   });
 
-  // ===== PUT /projects/:id - Update Project =====
-  describe('PUT /projects/:id - Update Project', () => {
+  // ===== PUT /api/projects/:id - Update Project =====
+  describe('PUT /api/projects/:id - Update Project', () => {
 
     test('should allow owner to update project', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId1}`)
+        .put(`/api/projects/${projectId1}`)
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Updated Portfolio Project',
@@ -358,7 +366,7 @@ describe('Project Controller Tests', () => {
 
     test('should update individual fields', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId1}`)
+        .put(`/api/projects/${projectId1}`)
         .set('Authorization', `Bearer ${token1}`)
         .send({
           status: 'archived'
@@ -373,7 +381,7 @@ describe('Project Controller Tests', () => {
 
     test('should update tags', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId1}`)
+        .put(`/api/projects/${projectId1}`)
         .set('Authorization', `Bearer ${token1}`)
         .send({
           tags: ['javascript', 'node.js']
@@ -386,7 +394,7 @@ describe('Project Controller Tests', () => {
 
     test('should update timestamp on modification', async () => {
       const getRes = await request(app)
-        .get(`/projects/${projectId1}`);
+        .get(`/api/projects/${projectId1}`);
 
       const originalUpdated = getRes.body.data.updated;
 
@@ -394,7 +402,7 @@ describe('Project Controller Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const updateRes = await request(app)
-        .put(`/projects/${projectId1}`)
+        .put(`/api/projects/${projectId1}`)
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Another Update'
@@ -405,7 +413,7 @@ describe('Project Controller Tests', () => {
 
     test('should prevent non-owner from updating', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId1}`)
+        .put(`/api/projects/${projectId1}`)
         .set('Authorization', `Bearer ${token2}`)
         .send({
           title: 'Hacked Title'
@@ -418,7 +426,7 @@ describe('Project Controller Tests', () => {
 
     test('should return 401 when not authenticated', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId1}`)
+        .put(`/api/projects/${projectId1}`)
         .send({
           title: 'Unauthorized Update'
         });
@@ -429,7 +437,7 @@ describe('Project Controller Tests', () => {
 
     test('should return 404 for non-existent project', async () => {
       const res = await request(app)
-        .put('/projects/507f1f77bcf86cd799439011')
+        .put('/api/projects/507f1f77bcf86cd799439011')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Updated'
@@ -441,7 +449,7 @@ describe('Project Controller Tests', () => {
 
     test('should allow only valid status values', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId1}`)
+        .put(`/api/projects/${projectId1}`)
         .set('Authorization', `Bearer ${token1}`)
         .send({
           status: 'draft'
@@ -453,7 +461,7 @@ describe('Project Controller Tests', () => {
 
     test('should not allow owner field to be updated', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId1}`)
+        .put(`/api/projects/${projectId1}`)
         .set('Authorization', `Bearer ${token1}`)
         .send({
           owner: user2Uid
@@ -465,13 +473,13 @@ describe('Project Controller Tests', () => {
     });
   });
 
-  // ===== DELETE /projects/:id - Delete Project =====
-  describe('DELETE /projects/:id - Delete Project', () => {
+  // ===== DELETE /api/projects/:id - Delete Project =====
+  describe('DELETE /api/projects/:id - Delete Project', () => {
 
     test('should allow owner to delete project', async () => {
       // Create a project to delete
       const createRes = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Project to Delete',
@@ -482,12 +490,12 @@ describe('Project Controller Tests', () => {
 
       // Verify it exists
       const getRes = await request(app)
-        .get(`/projects/${projectIdToDelete}`);
+        .get(`/api/projects/${projectIdToDelete}`);
       expect(getRes.status).toBe(200);
 
       // Delete it
       const deleteRes = await request(app)
-        .delete(`/projects/${projectIdToDelete}`)
+        .delete(`/api/projects/${projectIdToDelete}`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(deleteRes.status).toBe(200);
@@ -496,13 +504,13 @@ describe('Project Controller Tests', () => {
 
       // Verify it's gone
       const getAfterDelete = await request(app)
-        .get(`/projects/${projectIdToDelete}`);
+        .get(`/api/projects/${projectIdToDelete}`);
       expect(getAfterDelete.status).toBe(404);
     });
 
     test('should prevent non-owner from deleting', async () => {
       const res = await request(app)
-        .delete(`/projects/${projectId2}`)
+        .delete(`/api/projects/${projectId2}`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(403);
@@ -511,13 +519,13 @@ describe('Project Controller Tests', () => {
 
       // Verify it still exists
       const getRes = await request(app)
-        .get(`/projects/${projectId2}`);
+        .get(`/api/projects/${projectId2}`);
       expect(getRes.status).toBe(200);
     });
 
     test('should return 401 when not authenticated', async () => {
       const res = await request(app)
-        .delete(`/projects/${projectId2}`);
+        .delete(`/api/projects/${projectId2}`);
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -525,7 +533,7 @@ describe('Project Controller Tests', () => {
 
     test('should return 404 for non-existent project', async () => {
       const res = await request(app)
-        .delete('/projects/507f1f77bcf86cd799439011')
+        .delete('/api/projects/507f1f77bcf86cd799439011')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(404);
@@ -538,7 +546,7 @@ describe('Project Controller Tests', () => {
 
     test('should trim whitespace from title', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: '  Trimmed Title  ',
@@ -551,7 +559,7 @@ describe('Project Controller Tests', () => {
 
     test('should accept empty description', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'No Description Project',
@@ -564,7 +572,7 @@ describe('Project Controller Tests', () => {
 
     test('should accept special characters in title', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Project #2: Build "Amazing" App (v1.0)',
@@ -578,14 +586,14 @@ describe('Project Controller Tests', () => {
 
     test('should not modify created timestamp on update', async () => {
       const getRes = await request(app)
-        .get(`/projects/${projectId1}`);
+        .get(`/api/projects/${projectId1}`);
 
       const originalCreated = getRes.body.data.created;
 
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const updateRes = await request(app)
-        .put(`/projects/${projectId1}`)
+        .put(`/api/projects/${projectId1}`)
         .set('Authorization', `Bearer ${token1}`)
         .send({
           description: 'Modified'
@@ -596,7 +604,7 @@ describe('Project Controller Tests', () => {
 
     test('should accept tags as array', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Tags Array Project',
@@ -613,7 +621,7 @@ describe('Project Controller Tests', () => {
 
       for (const status of validStatuses) {
         const res = await request(app)
-          .post('/projects')
+          .post('/api/projects')
           .set('Authorization', `Bearer ${token1}`)
           .send({
             title: `Project Status ${status}`,

@@ -57,17 +57,21 @@ describe('Authentication & CRUD Tests', () => {
       const res = await request(app)
         .post('/api/auth/signup')
         .send({
-          displayName: 'Test User',
+          firstName: 'Test',
+          lastName: 'User',
           email: testEmail,
           password: testPassword,
-          role: 'student'
+          role: 'student',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
           // uid is optional - will be auto-generated
         });
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.token).toBeDefined();
-      expect(res.body.data.user.displayName).toBe('Test User');
+      expect(res.body.data.user.firstName).toBe('Test');
+      expect(res.body.data.user.lastName).toBe('User');
       expect(res.body.data.user.email).toBe(testEmail);
       expect(res.body.data.user.role).toBe('student');
       expect(res.body.data.user.uid).toBeDefined(); // Verify uid was auto-generated
@@ -81,8 +85,8 @@ describe('Authentication & CRUD Tests', () => {
       const res = await request(app)
         .post('/api/auth/signup')
         .send({
-          displayName: 'Test User'
-          // missing email and password
+          firstName: 'Test'
+          // missing lastName, email and password
         });
 
       expect(res.status).toBe(400);
@@ -94,9 +98,13 @@ describe('Authentication & CRUD Tests', () => {
       const res = await request(app)
         .post('/api/auth/signup')
         .send({
-          displayName: 'Another User',
+          firstName: 'Another',
+          lastName: 'User',
           email: testEmail, // Same email as first test
-          password: testPassword
+          password: testPassword,
+          role: 'student',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
           // uid is optional
         });
 
@@ -118,7 +126,8 @@ describe('Authentication & CRUD Tests', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.token).toBeDefined();
-      expect(res.body.data.user.displayName).toBe('Test User');
+      expect(res.body.data.user.firstName).toBe('Test');
+      expect(res.body.data.user.lastName).toBe('User');
       expect(res.body.data.user.email).toBe(testEmail);
     });
 
@@ -305,9 +314,13 @@ describe('Authentication & CRUD Tests', () => {
       const newUserRes = await request(app)
         .post('/api/auth/signup')
         .send({
-          displayName: 'Other User',
+          firstName: 'Other',
+          lastName: 'User',
           email: newUserEmail,
-          password: 'OtherPassword123'
+          password: 'OtherPassword123',
+          role: 'student',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
           // uid is optional - will be auto-generated
         });
 
@@ -340,9 +353,13 @@ describe('Authentication & CRUD Tests', () => {
       const newUserRes = await request(app)
         .post('/api/auth/signup')
         .send({
-          displayName: 'Delete Test User',
+          firstName: 'Delete',
+          lastName: 'User',
           email: newUserEmail,
-          password: 'DeletePassword123'
+          password: 'DeletePassword123',
+          role: 'student',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
           // uid is optional - will be auto-generated
         });
 
@@ -396,7 +413,8 @@ describe('Authentication & CRUD Tests', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.displayName).toBe('Test User');
+      expect(res.body.data.firstName).toBe('Test');
+      expect(res.body.data.lastName).toBe('User');
       expect(res.body.data.email).toBe(testEmail);
       expect(res.body.data.password).toBeUndefined(); // Password should never be returned
     });
@@ -407,7 +425,8 @@ describe('Authentication & CRUD Tests', () => {
       const res = await request(app)
         .put(`/api/users/${testUid}`)
         .send({
-          displayName: 'Updated Name'
+          firstName: 'Updated',
+          lastName: 'Name',
         });
 
       expect(res.status).toBe(401);
@@ -419,13 +438,15 @@ describe('Authentication & CRUD Tests', () => {
         .put(`/api/users/${testUid}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          displayName: 'Updated Test User',
+          firstName: 'Updated',
+          lastName: 'User',
           bio: 'Updated bio'
         });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.displayName).toBe('Updated Test User');
+      expect(res.body.data.firstName).toBe('Updated');
+      expect(res.body.data.lastName).toBe('User');
       expect(res.body.data.bio).toBe('Updated bio');
     });
   });

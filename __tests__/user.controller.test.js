@@ -46,10 +46,13 @@ describe('User Controller', () => {
       const uniqueUid = 'test_user_' + Date.now();
       const validUser = {
         uid: uniqueUid,
-        displayName: 'John Doe',
+        firstName: 'John',
+        lastName: 'Doe',
         email: 'john' + Date.now() + '@example.com',
         password: 'SecurePassword123',
         role: 'student',
+        schoolName: 'Test University',
+        programName: 'Computer Science'
       };
 
       const res = await request(app)
@@ -58,7 +61,8 @@ describe('User Controller', () => {
         .expect(201);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.displayName).toBe('John Doe');
+      expect(res.body.data.firstName).toBe('John');
+      expect(res.body.data.lastName).toBe('Doe');
     });
   });
 
@@ -78,16 +82,20 @@ describe('User Controller', () => {
       const user1Res = await request(app)
         .post('/api/auth/signup')
         .send({
-          displayName: 'List Test User 1',
+          firstName: 'List',
+          lastName: 'Tester',
           email: 'listtest1' + Date.now() + '@example.com',
           password: 'TestPassword123',
-          role: 'student'
+          role: 'student',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       const user2Res = await request(app)
         .post('/api/auth/signup')
         .send({
-          displayName: 'List Test User 2',
+          firstName: 'Admin',
+          lastName: 'User',
           email: 'listtest2' + Date.now() + '@example.com',
           password: 'TestPassword123',
           role: 'admin'
@@ -108,10 +116,13 @@ describe('User Controller', () => {
       const uniqueUid = 'user_' + Date.now();
       const user = {
         uid: uniqueUid,
-        displayName: 'John Doe',
+        firstName: 'John',
+        lastName: 'Doe',
         email: 'john' + Date.now() + '@example.com',
         password: 'SecurePassword123',
         role: 'student',
+        schoolName: 'Test University',
+        programName: 'Computer Science'
       };
 
       const createRes = await request(app)
@@ -125,7 +136,8 @@ describe('User Controller', () => {
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.displayName).toBe('John Doe');
+      expect(res.body.data.firstName).toBe('John');
+      expect(res.body.data.lastName).toBe('Doe');
       expect(res.body.data.email).toBe(user.email);
     });
 
@@ -149,10 +161,13 @@ describe('User Controller', () => {
       const signupRes = await request(app)
         .post('/api/auth/signup')
         .send({
-          displayName: 'Update Test User',
+          firstName: 'Update',
+          lastName: 'Tester',
           email: 'updatetest' + Date.now() + '@example.com',
           password: 'TestPassword123',
-          role: 'student'
+          role: 'student',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       authToken = signupRes.body.data.token;
@@ -161,7 +176,8 @@ describe('User Controller', () => {
 
     it('should update user with valid data', async () => {
       const updateData = {
-        displayName: 'Jane Doe',
+        firstName: 'Jane',
+        lastName: 'Doe',
         bio: 'Updated bio',
       };
 
@@ -172,7 +188,8 @@ describe('User Controller', () => {
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.displayName).toBe('Jane Doe');
+      expect(res.body.data.firstName).toBe('Jane');
+      expect(res.body.data.lastName).toBe('Doe');
       expect(res.body.data.bio).toBe('Updated bio');
     });
 
@@ -188,13 +205,14 @@ describe('User Controller', () => {
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.displayName).toBe('Update Test User'); // Should remain unchanged
+      expect(res.body.data.firstName).toBe('Update'); // Should remain unchanged
+      expect(res.body.data.lastName).toBe('Tester');
       expect(res.body.data.bio).toBe('Only bio updated');
     });
 
     it('should return 404 for non-existent user', async () => {
       const fakeUid = 'fake_uid_' + Date.now();
-      const updateData = { displayName: 'Test' };
+      const updateData = { firstName: 'Test', lastName: 'User' };
 
       const res = await request(app)
         .put(`/api/users/${fakeUid}`)
@@ -216,10 +234,13 @@ describe('User Controller', () => {
       const signupRes = await request(app)
         .post('/api/auth/signup')
         .send({
-          displayName: 'Delete Test User',
+          firstName: 'Delete',
+          lastName: 'Tester',
           email: 'deletetest' + Date.now() + '@example.com',
           password: 'TestPassword123',
-          role: 'student'
+          role: 'student',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       authToken = signupRes.body.data.token;

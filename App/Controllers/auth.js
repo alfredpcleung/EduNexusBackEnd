@@ -13,11 +13,11 @@ if (!process.env.JWT_SECRET) {
 // Sign Up - Create a new user
 module.exports.signup = async function (req, res, next) {
     try {
-        const { uid, displayName, email, password, role } = req.body;
+        const { uid, firstName, lastName, email, password, role, schoolName, programName, github, personalWebsite, linkedin, bio, profilePic } = req.body;
 
-        // Validate required fields (uid is now optional - auto-generated)
-        if (!displayName || !email || !password) {
-            return errorResponse(res, 400, "Missing required fields: displayName, email, password");
+        // Validate required fields
+        if (!firstName || !lastName || !email || !password) {
+            return errorResponse(res, 400, "Missing required fields: firstName, lastName, email, password");
         }
 
         // Check if user already exists (only by email if uid is not provided)
@@ -28,14 +28,30 @@ module.exports.signup = async function (req, res, next) {
             return errorResponse(res, 409, "User with this email already exists");
         }
 
+        const userRole = role || "student";
+
+        // Validate role-specific required fields
+        if (userRole === 'student') {
+            if (!schoolName || !programName) {
+                return errorResponse(res, 400, "School Name and Program Name are required for student users");
+            }
+        }
+
         // Create new user (uid will be auto-generated if not provided)
         const newUser = new UserModel({
             uid: uid || undefined, // Let the model generate it if not provided
-            displayName,
+            firstName,
+            lastName,
             email,
             password,
-            role: role || "student",
-            admin: false
+            role: userRole,
+            schoolName: userRole === 'student' ? schoolName : undefined,
+            programName: userRole === 'student' ? programName : undefined,
+            github,
+            personalWebsite,
+            linkedin,
+            bio,
+            profilePic
         });
 
         // Save user (password will be hashed automatically)
@@ -57,7 +73,8 @@ module.exports.signup = async function (req, res, next) {
             data: {
                 token,
                 user: {
-                    displayName: newUser.displayName,
+                    firstName: newUser.firstName,
+                    lastName: newUser.lastName,
                     email: newUser.email,
                     role: newUser.role,
                     uid: newUser.uid
@@ -109,7 +126,8 @@ module.exports.signin = async function (req, res, next) {
             data: {
                 token,
                 user: {
-                    displayName: user.displayName,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
                     email: user.email,
                     role: user.role,
                     uid: user.uid

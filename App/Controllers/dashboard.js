@@ -32,7 +32,8 @@ exports.getDashboard = async (req, res) => {
       dashboard: {
         user: {
           uid: user.uid,
-          displayName: user.displayName,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
           role: user.role,
           profilePic: user.profilePic,

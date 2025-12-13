@@ -18,12 +18,12 @@ const Feedback = require('../App/Models/feedback');
 // Setup Express app for testing
 const app = express();
 app.use(express.json());
-app.use('/auth', authRouter);
-app.use('/users', userRouter);
-app.use('/courses', courseRouter);
-app.use('/projects', projectRouter);
-app.use('/feedback', feedbackRouter);
-app.use('/dashboard', dashboardRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
+app.use('/api/courses', courseRouter);
+app.use('/api/projects', projectRouter);
+app.use('/api/feedback', feedbackRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 // Test data
 let token1, token2, user1Uid, user2Uid, courseId, projectId, feedbackId;
@@ -54,11 +54,14 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
     
     test('Should signup user 1', async () => {
       const res = await request(app)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
-          displayName: 'Alice',
+          firstName: 'Alice',
+          lastName: 'TestUser',
           email: 'alice@example.com',
-          password: 'password123'
+          password: 'password123',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       expect(res.status).toBe(201);
@@ -72,11 +75,14 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should signup user 2', async () => {
       const res = await request(app)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
-          displayName: 'Bob',
+          firstName: 'Bob',
+          lastName: 'TestUser',
           email: 'bob@example.com',
-          password: 'password456'
+          password: 'password456',
+          schoolName: 'Test University',
+          programName: 'Business'
         });
 
       expect(res.status).toBe(201);
@@ -88,7 +94,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should create course owned by user 1', async () => {
       const res = await request(app)
-        .post('/courses')
+        .post('/api/courses')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Web Development 101',
@@ -110,7 +116,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should create project (authenticated)', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Portfolio Project',
@@ -131,7 +137,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to create project without authentication', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .send({
           title: 'Another Project',
           description: 'Test',
@@ -144,7 +150,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to create project without title', async () => {
       const res = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           description: 'Test',
@@ -158,7 +164,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should get all projects', async () => {
       const res = await request(app)
-        .get('/projects');
+        .get('/api/projects');
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -168,7 +174,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should filter projects by courseId', async () => {
       const res = await request(app)
-        .get(`/projects?courseId=${courseId}`);
+        .get(`/api/projects?courseId=${courseId}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -179,7 +185,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should filter projects by owner', async () => {
       const res = await request(app)
-        .get(`/projects?owner=${user1Uid}`);
+        .get(`/api/projects?owner=${user1Uid}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -188,7 +194,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should get single project', async () => {
       const res = await request(app)
-        .get(`/projects/${projectId}`);
+        .get(`/api/projects/${projectId}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -197,7 +203,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to get non-existent project', async () => {
       const res = await request(app)
-        .get(`/projects/507f1f77bcf86cd799439011`);
+        .get(`/api/projects/507f1f77bcf86cd799439011`);
 
       expect(res.status).toBe(404);
       expect(res.body.success).toBe(false);
@@ -205,7 +211,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should update project as owner', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId}`)
+        .put(`/api/projects/${projectId}`)
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Updated Portfolio Project',
@@ -220,7 +226,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to update project as non-owner', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId}`)
+        .put(`/api/projects/${projectId}`)
         .set('Authorization', `Bearer ${token2}`)
         .send({
           title: 'Hacked Title'
@@ -233,7 +239,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to update project without authentication', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId}`)
+        .put(`/api/projects/${projectId}`)
         .send({
           title: 'Hacked Title'
         });
@@ -244,7 +250,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to delete project as non-owner', async () => {
       const res = await request(app)
-        .delete(`/projects/${projectId}`)
+        .delete(`/api/projects/${projectId}`)
         .set('Authorization', `Bearer ${token2}`);
 
       expect(res.status).toBe(403);
@@ -257,7 +263,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should create feedback (authenticated)', async () => {
       const res = await request(app)
-        .post('/feedback')
+        .post('/api/feedback')
         .set('Authorization', `Bearer ${token2}`)
         .send({
           projectId: projectId,
@@ -276,7 +282,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to create feedback without authentication', async () => {
       const res = await request(app)
-        .post('/feedback')
+        .post('/api/feedback')
         .send({
           projectId: projectId,
           rating: 5
@@ -288,7 +294,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to create feedback without projectId', async () => {
       const res = await request(app)
-        .post('/feedback')
+        .post('/api/feedback')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           rating: 5
@@ -301,7 +307,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to create feedback with invalid rating', async () => {
       const res = await request(app)
-        .post('/feedback')
+        .post('/api/feedback')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           projectId: projectId,
@@ -315,7 +321,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should prevent duplicate feedback from same author', async () => {
       const res = await request(app)
-        .post('/feedback')
+        .post('/api/feedback')
         .set('Authorization', `Bearer ${token2}`)
         .send({
           projectId: projectId,
@@ -329,7 +335,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should get feedback for project', async () => {
       const res = await request(app)
-        .get(`/feedback?projectId=${projectId}`);
+        .get(`/api/feedback?projectId=${projectId}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
@@ -339,7 +345,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should require projectId query parameter', async () => {
       const res = await request(app)
-        .get('/feedback');
+        .get('/api/feedback');
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
@@ -347,7 +353,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should filter feedback by authorId', async () => {
       const res = await request(app)
-        .get(`/feedback?projectId=${projectId}&authorId=${user2Uid}`);
+        .get(`/api/feedback?projectId=${projectId}&authorId=${user2Uid}`);
 
       expect(res.status).toBe(200);
       expect(res.body.data[0].authorId).toBe(user2Uid);
@@ -355,7 +361,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should update feedback as author', async () => {
       const res = await request(app)
-        .put(`/feedback/${feedbackId}`)
+        .put(`/api/feedback/${feedbackId}`)
         .set('Authorization', `Bearer ${token2}`)
         .send({
           rating: 5,
@@ -370,7 +376,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to update feedback as non-author', async () => {
       const res = await request(app)
-        .put(`/feedback/${feedbackId}`)
+        .put(`/api/feedback/${feedbackId}`)
         .set('Authorization', `Bearer ${token1}`)
         .send({
           rating: 1
@@ -383,7 +389,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to update feedback without authentication', async () => {
       const res = await request(app)
-        .put(`/feedback/${feedbackId}`)
+        .put(`/api/feedback/${feedbackId}`)
         .send({
           rating: 1
         });
@@ -394,7 +400,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail to delete feedback as non-author', async () => {
       const res = await request(app)
-        .delete(`/feedback/${feedbackId}`)
+        .delete(`/api/feedback/${feedbackId}`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(403);
@@ -403,7 +409,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should delete feedback as author', async () => {
       const res = await request(app)
-        .delete(`/feedback/${feedbackId}`)
+        .delete(`/api/feedback/${feedbackId}`)
         .set('Authorization', `Bearer ${token2}`);
 
       expect(res.status).toBe(200);
@@ -416,7 +422,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should fail without authentication', async () => {
       const res = await request(app)
-        .get('/dashboard/me');
+        .get('/api/dashboard/me');
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -424,39 +430,42 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should get dashboard for user 1 (course owner + project owner)', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.dashboard).toBeDefined();
       expect(res.body.dashboard.user.uid).toBe(user1Uid);
-      expect(res.body.dashboard.user.displayName).toBe('Alice');
+      expect(res.body.dashboard.user.firstName).toBe('Alice');
+      expect(res.body.dashboard.user.lastName).toBe('TestUser');
       expect(res.body.dashboard.ownedProjects.count).toBeGreaterThan(0);
       expect(res.body.dashboard.ownedProjects.projects[0]._id.toString()).toBe(projectId.toString());
     });
 
     test('Should get dashboard for user 2 (feedback author)', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token2}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.dashboard.user.uid).toBe(user2Uid);
-      expect(res.body.dashboard.user.displayName).toBe('Bob');
+      expect(res.body.dashboard.user.firstName).toBe('Bob');
+      expect(res.body.dashboard.user.lastName).toBe('TestUser');
       expect(res.body.dashboard.ownedCourses.count).toBe(0);
       expect(res.body.dashboard.ownedProjects.count).toBe(0);
     });
 
     test('Dashboard should include all user fields', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       const user = res.body.dashboard.user;
       expect(user).toHaveProperty('uid');
-      expect(user).toHaveProperty('displayName');
+      expect(user).toHaveProperty('firstName');
+      expect(user).toHaveProperty('lastName');
       expect(user).toHaveProperty('email');
       expect(user).toHaveProperty('role');
       expect(user).toHaveProperty('created');
@@ -465,7 +474,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Dashboard should have correct structure', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       const dashboard = res.body.dashboard;
@@ -487,7 +496,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Project owner can update their project', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId}`)
+        .put(`/api/projects/${projectId}`)
         .set('Authorization', `Bearer ${token1}`)
         .send({ status: 'active' });
 
@@ -497,7 +506,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Non-owner cannot update project', async () => {
       const res = await request(app)
-        .put(`/projects/${projectId}`)
+        .put(`/api/projects/${projectId}`)
         .set('Authorization', `Bearer ${token2}`)
         .send({ status: 'draft' });
 
@@ -508,7 +517,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
     test('Project owner can delete their project', async () => {
       // Create a new project to delete
       const createRes = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'To Delete',
@@ -516,7 +525,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
         });
 
       const deleteRes = await request(app)
-        .delete(`/projects/${createRes.body.data._id}`)
+        .delete(`/api/projects/${createRes.body.data._id}`)
         .set('Authorization', `Bearer ${token1}`);
 
       expect(deleteRes.status).toBe(200);
@@ -525,7 +534,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Non-owner cannot delete project', async () => {
       const res = await request(app)
-        .delete(`/projects/${projectId}`)
+        .delete(`/api/projects/${projectId}`)
         .set('Authorization', `Bearer ${token2}`);
 
       expect(res.status).toBe(403);
@@ -541,7 +550,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       for (const status of validStatuses) {
         const res = await request(app)
-          .post('/projects')
+          .post('/api/projects')
           .set('Authorization', `Bearer ${token1}`)
           .send({
             title: `Project ${status}`,
@@ -556,7 +565,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
     test('Should maintain feedback rating constraints (1-5)', async () => {
       // Create a new project for clean test
       const projectRes = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Rating Test Project'
@@ -571,17 +580,20 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
         const rating = validRatings[i];
         // Create a new user for each feedback to avoid duplicate constraint
         const newUserRes = await request(app)
-          .post('/auth/signup')
+          .post('/api/auth/signup')
           .send({
-            displayName: `RatingTestUser${i}`,
+            firstName: `RatingTest${i}`,
+            lastName: 'User',
             email: `ratingtest${i}@example.com`,
-            password: 'password123'
+            password: 'password123',
+            schoolName: 'Test University',
+            programName: 'Computer Science'
           });
 
         const userToken = newUserRes.body.data.token;
 
         const res = await request(app)
-          .post('/feedback')
+          .post('/api/feedback')
           .set('Authorization', `Bearer ${userToken}`)
           .send({
             projectId: newProjectId,
@@ -595,7 +607,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
     test('Should enforce unique compound index on feedback', async () => {
       // Create new project
       const projectRes = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Unique Feedback Test'
@@ -605,7 +617,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       // First feedback should succeed
       const res1 = await request(app)
-        .post('/feedback')
+        .post('/api/feedback')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           projectId: newProjectId,
@@ -616,7 +628,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       // Duplicate feedback should fail
       const res2 = await request(app)
-        .post('/feedback')
+        .post('/api/feedback')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           projectId: newProjectId,
@@ -628,7 +640,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
     test('Should return 404 for non-existent feedback', async () => {
       const res = await request(app)
-        .get('/feedback?projectId=507f1f77bcf86cd799439011');
+        .get('/api/feedback?projectId=507f1f77bcf86cd799439011');
 
       expect(res.status).toBe(200);
       expect(res.body.data).toEqual([]);

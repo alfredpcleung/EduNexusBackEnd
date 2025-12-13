@@ -39,9 +39,12 @@ describe('Feedback Controller Tests', () => {
     const signup1 = await request(app)
       .post('/auth/signup')
       .send({
-        displayName: 'Reviewer User',
+        firstName: 'Reviewer',
+        lastName: 'User',
         email: 'reviewer@test.com',
-        password: 'password123'
+        password: 'password123',
+        schoolName: 'Test University',
+        programName: 'Computer Science'
       });
 
     token1 = signup1.body.data.token;
@@ -50,9 +53,12 @@ describe('Feedback Controller Tests', () => {
     const signup2 = await request(app)
       .post('/auth/signup')
       .send({
-        displayName: 'Project Creator',
+        firstName: 'Project',
+        lastName: 'Creator',
         email: 'creator@test.com',
-        password: 'password456'
+        password: 'password456',
+        schoolName: 'Test University',
+        programName: 'Computer Science'
       });
 
     token2 = signup2.body.data.token;
@@ -61,9 +67,12 @@ describe('Feedback Controller Tests', () => {
     const signup3 = await request(app)
       .post('/auth/signup')
       .send({
-        displayName: 'Another Reviewer',
+        firstName: 'Another',
+        lastName: 'Reviewer',
         email: 'reviewer2@test.com',
-        password: 'password789'
+        password: 'password789',
+        schoolName: 'Test University',
+        programName: 'Computer Science'
       });
 
     token3 = signup3.body.data.token;
@@ -164,9 +173,12 @@ describe('Feedback Controller Tests', () => {
         const newUser = await request(app)
           .post('/auth/signup')
           .send({
-            displayName: `User Rating ${rating}`,
+            firstName: `RatingUser`,
+            lastName: `${rating}`,
             email: `ratinguser${rating}@test.com`,
-            password: 'password123'
+            password: 'password123',
+            schoolName: 'Test University',
+            programName: 'Computer Science'
           });
 
         const res = await request(app)
@@ -620,9 +632,12 @@ describe('Feedback Controller Tests', () => {
       const newUser = await request(app)
         .post('/auth/signup')
         .send({
-          displayName: 'Long Comment User',
+          firstName: 'Long',
+          lastName: 'Comment',
           email: 'longcomment@test.com',
-          password: 'password123'
+          password: 'password123',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       const longComment = 'A'.repeat(1000);
@@ -644,9 +659,12 @@ describe('Feedback Controller Tests', () => {
       const newUser = await request(app)
         .post('/auth/signup')
         .send({
-          displayName: 'Special Char User',
+          firstName: 'Special',
+          lastName: 'Char',
           email: 'specialchar@test.com',
-          password: 'password123'
+          password: 'password123',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       const specialComment = 'Great work! 🎉 #amazing @project $100';
@@ -693,9 +711,12 @@ describe('Feedback Controller Tests', () => {
       const testUser = await request(app)
         .post('/auth/signup')
         .send({
-          displayName: 'Boundary Test User',
+          firstName: 'Boundary',
+          lastName: 'Test',
           email: 'boundarytest@test.com',
-          password: 'password123'
+          password: 'password123',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       // Test rating 1
@@ -714,9 +735,12 @@ describe('Feedback Controller Tests', () => {
       const newUser2 = await request(app)
         .post('/auth/signup')
         .send({
-          displayName: 'Another Boundary User',
+          firstName: 'Another',
+          lastName: 'Boundary',
           email: 'boundary2@test.com',
-          password: 'password123'
+          password: 'password123',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       const res5 = await request(app)
@@ -735,9 +759,12 @@ describe('Feedback Controller Tests', () => {
       const uniqueTestUser = await request(app)
         .post('/auth/signup')
         .send({
-          displayName: 'Unique Test User',
+          firstName: 'Unique',
+          lastName: 'Test',
           email: 'uniquetest@test.com',
-          password: 'password123'
+          password: 'password123',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       const newProject = await request(app)

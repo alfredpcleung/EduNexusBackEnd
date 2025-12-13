@@ -18,12 +18,12 @@ const Feedback = require('../App/Models/feedback');
 // Setup Express app for testing
 const app = express();
 app.use(express.json());
-app.use('/auth', authRouter);
-app.use('/users', userRouter);
-app.use('/courses', courseRouter);
-app.use('/projects', projectRouter);
-app.use('/feedback', feedbackRouter);
-app.use('/dashboard', dashboardRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
+app.use('/api/courses', courseRouter);
+app.use('/api/projects', projectRouter);
+app.use('/api/feedback', feedbackRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 // Test data
 let token1, token2, user1Uid, user2Uid;
@@ -43,11 +43,14 @@ describe('Dashboard Controller Tests', () => {
 
     // Create test user 1 (will own courses, projects, and provide feedback)
     const signup1 = await request(app)
-      .post('/auth/signup')
+      .post('/api/auth/signup')
       .send({
-        displayName: 'Dashboard User 1',
+        firstName: 'Dashboard',
+        lastName: 'User1',
         email: 'dashboarduser1@test.com',
-        password: 'password123'
+        password: 'password123',
+        schoolName: 'Test University',
+        programName: 'Computer Science'
       });
 
     token1 = signup1.body.data.token;
@@ -55,11 +58,14 @@ describe('Dashboard Controller Tests', () => {
 
     // Create test user 2 (will own projects for user1 to feedback on)
     const signup2 = await request(app)
-      .post('/auth/signup')
+      .post('/api/auth/signup')
       .send({
-        displayName: 'Dashboard User 2',
+        firstName: 'Dashboard',
+        lastName: 'User2',
         email: 'dashboarduser2@test.com',
-        password: 'password456'
+        password: 'password456',
+        schoolName: 'Test University',
+        programName: 'Business'
       });
 
     token2 = signup2.body.data.token;
@@ -67,7 +73,7 @@ describe('Dashboard Controller Tests', () => {
 
     // User 1: Create 2 courses
     const course1Res = await request(app)
-      .post('/courses')
+      .post('/api/courses')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         title: 'Web Development 101',
@@ -79,7 +85,7 @@ describe('Dashboard Controller Tests', () => {
     courseId1 = course1Res.body.data._id;
 
     const course2Res = await request(app)
-      .post('/courses')
+      .post('/api/courses')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         title: 'Data Science Basics',
@@ -92,7 +98,7 @@ describe('Dashboard Controller Tests', () => {
 
     // User 1: Create 2 projects
     const project1Res = await request(app)
-      .post('/projects')
+      .post('/api/projects')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         title: 'Personal Portfolio Site',
@@ -104,7 +110,7 @@ describe('Dashboard Controller Tests', () => {
     projectId1 = project1Res.body.data._id;
 
     const project2Res = await request(app)
-      .post('/projects')
+      .post('/api/projects')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         title: 'Data Analysis Project',
@@ -117,7 +123,7 @@ describe('Dashboard Controller Tests', () => {
 
     // User 2: Create project for user1 to feedback on
     const project3Res = await request(app)
-      .post('/projects')
+      .post('/api/projects')
       .set('Authorization', `Bearer ${token2}`)
       .send({
         title: 'User 2 Project',
@@ -128,7 +134,7 @@ describe('Dashboard Controller Tests', () => {
 
     // User 1: Provide feedback on User 2's project
     const feedbackRes = await request(app)
-      .post('/feedback')
+      .post('/api/feedback')
       .set('Authorization', `Bearer ${token1}`)
       .send({
         projectId: projectId3,
@@ -153,7 +159,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should return dashboard for authenticated user', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -163,14 +169,15 @@ describe('Dashboard Controller Tests', () => {
 
     test('should return user information', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
       const user = res.body.dashboard.user;
 
       expect(user.uid).toBe(user1Uid);
-      expect(user.displayName).toBe('Dashboard User 1');
+      expect(user.firstName).toBe('Dashboard');
+      expect(user.lastName).toBe('User1');
       expect(user.email).toBe('dashboarduser1@test.com');
       expect(user.role).toBeDefined();
       expect(user.created).toBeDefined();
@@ -179,14 +186,15 @@ describe('Dashboard Controller Tests', () => {
 
     test('should include user profile information', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
       const user = res.body.dashboard.user;
 
       expect(user.uid).toBe(user1Uid);
-      expect(user.displayName).toBe('Dashboard User 1');
+      expect(user.firstName).toBe('Dashboard');
+      expect(user.lastName).toBe('User1');
       expect(user.email).toBe('dashboarduser1@test.com');
       expect(user.role).toBeDefined();
       expect(user.created).toBeDefined();
@@ -195,7 +203,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should return owned courses with correct structure', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -208,7 +216,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should return correct course details if courses exist', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -225,7 +233,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should only return user-owned courses', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token2}`);
 
       expect(res.status).toBe(200);
@@ -237,7 +245,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should return owned projects with correct count', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -250,7 +258,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should return correct project details', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -267,7 +275,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should only return user-owned projects', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token2}`);
 
       expect(res.status).toBe(200);
@@ -280,7 +288,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should return authored feedback with correct count', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -293,7 +301,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should return correct feedback details', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -307,7 +315,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should only return user-authored feedback', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token2}`);
 
       expect(res.status).toBe(200);
@@ -319,7 +327,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should return complete dashboard structure', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -340,7 +348,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should fail without authentication', async () => {
       const res = await request(app)
-        .get('/dashboard/me');
+        .get('/api/dashboard/me');
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
@@ -350,7 +358,7 @@ describe('Dashboard Controller Tests', () => {
       // This is a rare edge case - user deleted after token created
       // For this test, we'll just verify the endpoint structure
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       // User should exist, so this should succeed
@@ -363,7 +371,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should not include courses owned by other users', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token2}`);
 
       expect(res.status).toBe(200);
@@ -377,7 +385,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should not include projects owned by other users', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token2}`);
 
       expect(res.status).toBe(200);
@@ -391,7 +399,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should not include feedback authored by other users', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token2}`);
 
       expect(res.status).toBe(200);
@@ -404,7 +412,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should aggregate only user-specific data across all categories', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -433,14 +441,14 @@ describe('Dashboard Controller Tests', () => {
     test('should reflect changes after project creation', async () => {
       // Get initial dashboard
       const res1 = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       const initialCount = res1.body.dashboard.ownedProjects.count;
 
       // Create new project
       await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'New Dashboard Project',
@@ -449,7 +457,7 @@ describe('Dashboard Controller Tests', () => {
 
       // Get updated dashboard
       const res2 = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       const updatedCount = res2.body.dashboard.ownedProjects.count;
@@ -459,14 +467,14 @@ describe('Dashboard Controller Tests', () => {
     test('should reflect changes after feedback creation', async () => {
       // Get initial dashboard for user2
       const res1 = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token2}`);
 
       const initialCount = res1.body.dashboard.authoredFeedback.count;
 
       // Create new project first
       const projectRes = await request(app)
-        .post('/projects')
+        .post('/api/projects')
         .set('Authorization', `Bearer ${token1}`)
         .send({
           title: 'Feedback Test Project'
@@ -474,7 +482,7 @@ describe('Dashboard Controller Tests', () => {
 
       // Create feedback as user2
       await request(app)
-        .post('/feedback')
+        .post('/api/feedback')
         .set('Authorization', `Bearer ${token2}`)
         .send({
           projectId: projectRes.body.data._id,
@@ -484,7 +492,7 @@ describe('Dashboard Controller Tests', () => {
 
       // Get updated dashboard
       const res2 = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token2}`);
 
       const updatedCount = res2.body.dashboard.authoredFeedback.count;
@@ -493,7 +501,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should return sorted feedback by creation date (newest first)', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       const feedback = res.body.dashboard.authoredFeedback.feedback;
@@ -509,7 +517,7 @@ describe('Dashboard Controller Tests', () => {
 
     test('should include all required fields in aggregated data', async () => {
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
@@ -517,7 +525,8 @@ describe('Dashboard Controller Tests', () => {
 
       // Check user fields
       expect(dashboard.user).toHaveProperty('uid');
-      expect(dashboard.user).toHaveProperty('displayName');
+      expect(dashboard.user).toHaveProperty('firstName');
+      expect(dashboard.user).toHaveProperty('lastName');
       expect(dashboard.user).toHaveProperty('email');
       expect(dashboard.user).toHaveProperty('role');
       expect(dashboard.user).toHaveProperty('created');
@@ -562,15 +571,18 @@ describe('Dashboard Controller Tests', () => {
 
     test('should handle user with no courses', async () => {
       const newUser = await request(app)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
-          displayName: 'No Courses User',
+          firstName: 'No',
+          lastName: 'Courses',
           email: 'nocourses@test.com',
-          password: 'password123'
+          password: 'password123',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${newUser.body.data.token}`);
 
       expect(res.status).toBe(200);
@@ -580,15 +592,18 @@ describe('Dashboard Controller Tests', () => {
 
     test('should handle user with no projects', async () => {
       const newUser = await request(app)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
-          displayName: 'No Projects User',
+          firstName: 'No',
+          lastName: 'Projects',
           email: 'noprojects@test.com',
-          password: 'password123'
+          password: 'password123',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${newUser.body.data.token}`);
 
       expect(res.status).toBe(200);
@@ -598,15 +613,18 @@ describe('Dashboard Controller Tests', () => {
 
     test('should handle user with no feedback', async () => {
       const newUser = await request(app)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
-          displayName: 'No Feedback User',
+          firstName: 'No',
+          lastName: 'Feedback',
           email: 'nofeedback@test.com',
-          password: 'password123'
+          password: 'password123',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${newUser.body.data.token}`);
 
       expect(res.status).toBe(200);
@@ -616,15 +634,18 @@ describe('Dashboard Controller Tests', () => {
 
     test('should handle user with all empty categories', async () => {
       const newUser = await request(app)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
-          displayName: 'Empty Dashboard User',
+          firstName: 'Empty',
+          lastName: 'Dashboard',
           email: 'emptydash@test.com',
-          password: 'password123'
+          password: 'password123',
+          schoolName: 'Test University',
+          programName: 'Computer Science'
         });
 
       const res = await request(app)
-        .get('/dashboard/me')
+        .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${newUser.body.data.token}`);
 
       expect(res.status).toBe(200);

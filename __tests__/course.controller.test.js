@@ -42,10 +42,13 @@ describe('Course Controller', () => {
     const signupRes = await request(app)
       .post('/api/auth/signup')
       .send({
-        displayName: 'Test User',
+        firstName: 'Course',
+        lastName: 'Tester',
         email: 'coursetest@example.com',
         password: 'TestPassword123',
-        role: 'student'
+        role: 'student',
+        schoolName: 'Test University',
+        programName: 'Computer Science'
       });
 
     authToken = signupRes.body.data.token;

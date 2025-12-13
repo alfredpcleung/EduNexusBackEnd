@@ -4,8 +4,7 @@ var errorResponse = require('../Utils/errorResponse');
 module.exports.create = async function (req, res, next) {
     try {
         const userData = {
-            ...req.body,
-            admin: false
+            ...req.body
         };
         let result = await UserModel.create(userData);
         res.status(201).json({
