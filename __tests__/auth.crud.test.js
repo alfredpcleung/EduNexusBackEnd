@@ -176,7 +176,7 @@ describe('Authentication & CRUD Tests', () => {
           title: 'Test Course',
           description: 'Test Description',
           instructor: 'Dr. Test',
-          credits: 3,
+          credits: 4,
           tags: ['test']
         });
 
@@ -193,7 +193,7 @@ describe('Authentication & CRUD Tests', () => {
           title: 'Test Course',
           description: 'Test Description',
           instructor: 'Dr. Test',
-          credits: 3
+          credits: 4
         });
 
       expect(res.status).toBe(401);

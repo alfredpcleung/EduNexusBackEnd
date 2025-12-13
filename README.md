@@ -416,7 +416,7 @@ jest.config.js                      # Jest configuration
 ### Course Model
 - `title`: Course title (required)
 - `description`: Course description (required)
-- `credits`: Credit hours (default: 3)
+- `credits`: Credit hours (default: 4)
 - `instructor`: Instructor name (required)
 - `owner`: User ID of course creator (required)
 - `studentsEnrolled`: Array of enrolled student IDs

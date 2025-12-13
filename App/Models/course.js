@@ -5,8 +5,7 @@ const CourseSchema = new Schema(
   {
     title: { type: String, required: true, trim: true },        // Course title
     description: { type: String, required: true },              // Detailed description
-    credits: { type: Number, default: 3 },                      // Credit hours
-    instructor: { type: String },                               // Instructor name (optional)
+    credits: { type: Number, default: 4 },                      // Credit hours
     owner: { type: String, required: true },                    // User ID of course creator
     studentsEnrolled: { type: [String], default: [] },          // Array of user IDs or names
     tags: { type: [String], default: [] },                      // Keywords/categories

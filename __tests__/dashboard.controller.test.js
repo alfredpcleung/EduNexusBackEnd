@@ -72,7 +72,7 @@ describe('Dashboard Controller Tests', () => {
       .send({
         title: 'Web Development 101',
         description: 'Learn web dev',
-        credits: 3,
+        credits: 4,
         instructor: 'User 1'
       });
 
@@ -530,7 +530,6 @@ describe('Dashboard Controller Tests', () => {
         expect(course).toHaveProperty('title');
         expect(course).toHaveProperty('description');
         expect(course).toHaveProperty('credits');
-        expect(course).toHaveProperty('instructor');
       }
 
       // Check project fields

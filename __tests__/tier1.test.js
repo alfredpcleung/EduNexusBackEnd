@@ -93,7 +93,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
         .send({
           title: 'Web Development 101',
           description: 'Learn web dev',
-          credits: 3,
+          credits: 4,
           instructor: 'Alice'
         });
 
