@@ -7,6 +7,7 @@ const FeedbackSchema = new Schema(
     authorId: { type: String, required: true },                 // User uid
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String },
+    tags: { type: [String], default: [] },                      // e.g., ["bug", "feature-request", "suggestion"]
     created: { type: Date, default: Date.now, immutable: true },
     updated: { type: Date, default: Date.now }
   },

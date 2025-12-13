@@ -60,12 +60,12 @@ exports.listFeedback = async (req, res) => {
 /**
  * POST /api/feedback
  * Protected endpoint - create new feedback
- * Body: { projectId, rating, comment? }
+ * Body: { projectId, rating, comment?, tags? }
  * Enforces: only one feedback per author per project
  */
 exports.createFeedback = async (req, res) => {
   try {
-    const { projectId, rating, comment } = req.body;
+    const { projectId, rating, comment, tags } = req.body;
     const authorUid = req.user.uid;
 
     if (!projectId) {
@@ -90,7 +90,8 @@ exports.createFeedback = async (req, res) => {
       projectId,
       authorId: authorUid,
       rating,
-      comment: comment || ''
+      comment: comment || '',
+      tags: Array.isArray(tags) ? tags : []
     });
 
     await newFeedback.save();
@@ -121,14 +122,14 @@ exports.createFeedback = async (req, res) => {
 /**
  * PUT /api/feedback/:feedbackId
  * Protected endpoint - update feedback (author only)
- * Body: { rating?, comment? }
+ * Body: { rating?, comment?, tags? }
  */
 exports.updateFeedback = async (req, res) => {
   try {
     const { feedbackId } = req.params;
     const authorUid = req.user.uid;
     const userRole = req.user.role;
-    const { rating, comment } = req.body;
+    const { rating, comment, tags } = req.body;
 
     const feedback = await Feedback.findById(feedbackId);
     if (!feedback) {
@@ -148,6 +149,7 @@ exports.updateFeedback = async (req, res) => {
     // Update fields
     if (rating !== undefined) feedback.rating = rating;
     if (comment !== undefined) feedback.comment = comment;
+    if (tags !== undefined) feedback.tags = Array.isArray(tags) ? tags : [];
 
     feedback.updated = new Date();
     await feedback.save();
