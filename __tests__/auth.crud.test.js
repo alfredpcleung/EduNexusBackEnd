@@ -182,11 +182,12 @@ describe('Authentication & CRUD Tests', () => {
       const res = await request(app)
         .post('/api/courses')
         .send({
+          institution: 'Test University',
+          courseSubject: 'COMP',
+          courseNumber: '100',
           title: 'Test Course',
           description: 'Test Description',
-          instructor: 'Dr. Test',
-          credits: 4,
-          tags: ['test']
+          credits: 4
         });
 
       expect(res.status).toBe(401);
@@ -199,9 +200,11 @@ describe('Authentication & CRUD Tests', () => {
         .post('/api/courses')
         .set('Authorization', 'Bearer invalid_token_here')
         .send({
+          institution: 'Test University',
+          courseSubject: 'COMP',
+          courseNumber: '100',
           title: 'Test Course',
           description: 'Test Description',
-          instructor: 'Dr. Test',
           credits: 4
         });
 
@@ -215,18 +218,18 @@ describe('Authentication & CRUD Tests', () => {
         .post('/api/courses')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
+          institution: 'Test University',
+          courseSubject: 'JS',
+          courseNumber: '400',
           title: 'Advanced JavaScript',
           description: 'Learn advanced JavaScript concepts',
-          instructor: 'Dr. Smith',
-          credits: 4,
-          tags: ['javascript', 'advanced'],
-          status: 'active'
+          credits: 4
         });
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.title).toBe('Advanced JavaScript');
-      expect(res.body.data.owner).toBe(testUid); // Verify owner is the authenticated user's UID
+      expect(res.body.data.courseCode).toBe('JS 400');
       expect(res.body.data.credits).toBe(4);
 
       // Store course ID from the response
@@ -254,7 +257,7 @@ describe('Authentication & CRUD Tests', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data._id).toBe(courseId);
       expect(res.body.data.title).toBe('Advanced JavaScript');
-      expect(res.body.data.owner).toBe(testUid);
+      expect(res.body.data.courseSubject).toBe('JS');
     });
 
     test('Should fail to get non-existent course', async () => {
@@ -267,7 +270,7 @@ describe('Authentication & CRUD Tests', () => {
     });
   });
 
-  describe('Courses - Update (Protected + Owner Check)', () => {
+  describe('Courses - Update (Protected)', () => {
     test('Should fail to update course without auth token', async () => {
       const res = await request(app)
         .put(`/api/courses/${courseId}`)
@@ -291,55 +294,42 @@ describe('Authentication & CRUD Tests', () => {
       expect(res.body.success).toBe(false);
     });
 
-    test('Should successfully update own course', async () => {
+    test('Should successfully update course with valid auth', async () => {
       const res = await request(app)
         .put(`/api/courses/${courseId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           title: 'Updated JavaScript Course',
           credits: 5,
-          status: 'archived'
+          description: 'Updated description'
         });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.title).toBe('Updated JavaScript Course');
       expect(res.body.data.credits).toBe(5);
-      expect(res.body.data.status).toBe('archived');
     });
 
-    test('Should fail to update course owned by another user', async () => {
-      // Create another user and try to update first user's course
-      const newUserEmail = 'otheruser@example.com';
-      const newUserRes = await request(app)
-        .post('/api/auth/signup')
-        .send({
-          firstName: 'Other',
-          lastName: 'User',
-          email: newUserEmail,
-          password: 'OtherPassword123',
-          role: 'student',
-          schoolName: 'Test University',
-          programName: 'Computer Science'
-          // uid is optional - will be auto-generated
-        });
-
-      const otherUserToken = newUserRes.body.data.token;
-
-      const updateRes = await request(app)
+    test('Should not allow updating aggregate fields directly', async () => {
+      const res = await request(app)
         .put(`/api/courses/${courseId}`)
-        .set('Authorization', `Bearer ${otherUserToken}`)
+        .set('Authorization', `Bearer ${authToken}`)
         .send({
-          title: 'Unauthorized Update'
+          avgDifficulty: 5,
+          numReviews: 100
         });
 
-      expect(updateRes.status).toBe(403);
-      expect(updateRes.body.success).toBe(false);
-      expect(updateRes.body.message).toContain('not authorized');
+      // Should succeed but ignore aggregate fields
+      expect(res.status).toBe(200);
+      
+      // Verify aggregates weren't changed
+      const getRes = await request(app).get(`/api/courses/${courseId}`);
+      expect(getRes.body.data.avgDifficulty).toBeNull();
+      expect(getRes.body.data.numReviews).toBe(0);
     });
   });
 
-  describe('Courses - Delete (Protected + Owner Check)', () => {
+  describe('Courses - Delete (Protected)', () => {
     test('Should fail to delete course without auth token', async () => {
       const res = await request(app)
         .delete(`/api/courses/${courseId}`);
@@ -348,39 +338,23 @@ describe('Authentication & CRUD Tests', () => {
       expect(res.body.success).toBe(false);
     });
 
-    test('Should fail to delete course owned by another user', async () => {
-      const newUserEmail = 'deletetest@example.com';
-      const newUserRes = await request(app)
-        .post('/api/auth/signup')
-        .send({
-          firstName: 'Delete',
-          lastName: 'User',
-          email: newUserEmail,
-          password: 'DeletePassword123',
-          role: 'student',
-          schoolName: 'Test University',
-          programName: 'Computer Science'
-          // uid is optional - will be auto-generated
-        });
-
-      const otherUserToken = newUserRes.body.data.token;
-
-      const deleteRes = await request(app)
+    test('Should fail to delete course with invalid token', async () => {
+      const res = await request(app)
         .delete(`/api/courses/${courseId}`)
-        .set('Authorization', `Bearer ${otherUserToken}`);
+        .set('Authorization', 'Bearer invalid_token');
 
-      expect(deleteRes.status).toBe(403);
-      expect(deleteRes.body.success).toBe(false);
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
     });
 
-    test('Should successfully delete own course', async () => {
+    test('Should successfully delete course with valid auth', async () => {
       const res = await request(app)
         .delete(`/api/courses/${courseId}`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.message).toContain('deleted successfully');
+      expect(res.body.message).toContain('deleted successfully');
     });
 
     test('Should not be able to get deleted course', async () => {

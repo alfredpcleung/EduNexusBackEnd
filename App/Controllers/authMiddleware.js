@@ -41,3 +41,21 @@ module.exports.requireAuth = async (req, res, next) => {
         return errorResponse(res, 401, "Authentication failed.");
     }
 };
+
+// Middleware to require admin role
+module.exports.requireAdmin = async (req, res, next) => {
+    try {
+        // requireAuth must be called first to populate req.user
+        if (!req.user) {
+            return errorResponse(res, 401, "Authentication required.");
+        }
+
+        if (req.user.role !== 'admin') {
+            return errorResponse(res, 403, "Admin access required.");
+        }
+
+        next();
+    } catch (error) {
+        return errorResponse(res, 500, "Authorization check failed.");
+    }
+};

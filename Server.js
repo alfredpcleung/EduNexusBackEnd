@@ -11,6 +11,7 @@ var courseRotuer = require('./App/Routers/course.js');
 var projectRouter = require('./App/Routers/project.js');
 var feedbackRouter = require('./App/Routers/feedback.js');
 var dashboardRouter = require('./App/Routers/dashboard.js');
+var reviewRouter = require('./App/Routers/review.js');
 
 var app = Express();
 configDb();
@@ -26,6 +27,7 @@ app.use('/api/courses', courseRotuer);
 app.use('/api/projects', projectRouter);
 app.use('/api/feedback', feedbackRouter);
 app.use('/api/dashboard', dashboardRouter);
+app.use('/api/reviews', reviewRouter);
 
 app.use(function(req, res, next) {
   next(createError(404));

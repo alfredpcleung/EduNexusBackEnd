@@ -1,6 +1,6 @@
 # EduNexus Backend API Documentation
 
-**Last Updated:** December 12, 2025  
+**Last Updated:** December 13, 2025  
 **Status:** ✅ Production Deployed & Verified  
 **Backend URL:** https://edunexusbackend-mi24.onrender.com/api  
 **All Endpoints:** Operational & Tested
@@ -15,14 +15,15 @@
 4. [Production Deployment](#production-deployment)
 5. [Authentication Endpoints](#authentication-endpoints)
 6. [Course Endpoints](#course-endpoints)
-7. [User Endpoints](#user-endpoints)
-8. [Project Endpoints (Tier 1)](#project-endpoints-tier-1)
-9. [Feedback Endpoints (Tier 1)](#feedback-endpoints-tier-1)
-10. [Dashboard Endpoints](#dashboard-endpoints)
-11. [Token Management](#token-management)
-12. [Error Handling](#error-handling)
-13. [Frontend Implementation Guide](#frontend-implementation-guide)
-14. [Troubleshooting](#troubleshooting)
+7. [Review Endpoints](#review-endpoints)
+8. [User Endpoints](#user-endpoints)
+9. [Project Endpoints (Tier 1)](#project-endpoints-tier-1)
+10. [Feedback Endpoints (Tier 1)](#feedback-endpoints-tier-1)
+11. [Dashboard Endpoints](#dashboard-endpoints)
+12. [Token Management](#token-management)
+13. [Error Handling](#error-handling)
+14. [Frontend Implementation Guide](#frontend-implementation-guide)
+15. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -33,11 +34,11 @@ http://localhost:3000/api                                    (Local Development)
 https://edunexusbackend-mi24.onrender.com/api                (Production - LIVE)
 ```
 
-✅ **Production Verified:** December 12, 2025  
+✅ **Production Verified:** December 13, 2025  
 ✅ **Authentication:** Working (JWT with 7-day expiration)  
 ✅ **Database:** Connected (MongoDB Atlas)  
 ✅ **All Endpoints:** Operational  
-✅ **Test Coverage:** 193/193 tests passing
+✅ **Test Coverage:** 265/265 tests passing
 
 ---
 
@@ -339,8 +340,43 @@ Authorization: Bearer <token>
 
 ## Course Endpoints
 
+> **⚠️ BREAKING CHANGE (December 13, 2025):** Course schema completely redesigned.
+> - Courses are now **institution catalog entries** (no owner field)
+> - Identified by compound key: `institution + courseSubject + courseNumber`
+> - Review aggregation metrics added (calculated from reviews)
+> - Any authenticated user can create courses
+
+### Course Schema
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `institution` | String | Yes | Institution name (e.g., "Centennial College") |
+| `courseSubject` | String | Yes | 2-5 uppercase letters (e.g., "COMP", "MATH") |
+| `courseNumber` | String | Yes | 2-4 digits (e.g., "100", "2003") |
+| `title` | String | Yes | Course title |
+| `description` | String | No | Course description |
+| `credits` | Number | No | Credit value (default: 3) |
+| `syllabusRevisionDate` | Date | No | Last syllabus update |
+| `prerequisites` | Array | No | Array of prerequisite course codes |
+| `corequisites` | Array | No | Array of corequisite course codes |
+| `avgDifficulty` | Number | Auto | Average difficulty (1-5), null if < 3 reviews |
+| `avgUsefulness` | Number | Auto | Average usefulness (1-5), null if < 3 reviews |
+| `avgWorkload` | Number | Auto | Average workload (1-5), null if < 3 reviews |
+| `avgGradingFairness` | Number | Auto | Average grading fairness (1-5), null if < 3 reviews |
+| `numReviews` | Number | Auto | Total number of active reviews |
+| `topTags` | Array | Auto | Most common review tags |
+| `lastReviewAt` | Date | Auto | Timestamp of most recent review |
+
+**Virtual Field:** `courseCode` - Returns `courseSubject + courseNumber` (e.g., "COMP213")
+
+---
+
 ### 1. List All Courses (Public - No Auth Required)
 **Endpoint:** `GET /courses`
+
+**Query Parameters:**
+- `institution` (optional) - Filter by institution name
+- `courseSubject` (optional) - Filter by subject code
 
 **Success Response (200):**
 ```json
@@ -349,14 +385,23 @@ Authorization: Bearer <token>
   "data": [
     {
       "_id": "507f1f77bcf86cd799439011",
-      "title": "Introduction to React",
-      "description": "Learn React basics",
+      "id": "507f1f77bcf86cd799439011",
+      "institution": "Centennial College",
+      "courseSubject": "COMP",
+      "courseNumber": "213",
+      "courseCode": "COMP213",
+      "title": "Web Interface Design",
+      "description": "Learn modern web development",
       "credits": 3,
-      "instructor": "Dr. Smith",
-      "owner": "user_id_here",
-      "studentsEnrolled": ["student1", "student2"],
-      "tags": ["web", "javascript"],
-      "status": "active"
+      "prerequisites": ["COMP100"],
+      "corequisites": [],
+      "avgDifficulty": 3.5,
+      "avgUsefulness": 4.2,
+      "avgWorkload": 3.8,
+      "avgGradingFairness": 4.0,
+      "numReviews": 5,
+      "topTags": ["engaging-lectures", "heavy-workload"],
+      "lastReviewAt": "2025-12-10T15:30:00Z"
     }
   ]
 }
@@ -373,17 +418,22 @@ Authorization: Bearer <token>
   "success": true,
   "data": {
     "_id": "507f1f77bcf86cd799439011",
-    "title": "Introduction to React",
-    "description": "Learn React basics",
+    "id": "507f1f77bcf86cd799439011",
+    "institution": "Centennial College",
+    "courseSubject": "COMP",
+    "courseNumber": "213",
+    "courseCode": "COMP213",
+    "title": "Web Interface Design",
+    "description": "Learn modern web development",
     "credits": 3,
-    "instructor": "Dr. Smith",
-    "owner": "user_id_here",
-    "studentsEnrolled": ["student1", "student2"],
-    "tags": ["web", "javascript"],
-    "status": "active"
+    "avgDifficulty": 3.5,
+    "avgUsefulness": 4.2,
+    "numReviews": 5
   }
 }
 ```
+
+**Note:** Aggregate fields (`avgDifficulty`, `avgUsefulness`, etc.) are `null` if fewer than 3 reviews exist.
 
 ---
 
@@ -399,17 +449,16 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  "title": "Advanced JavaScript",
-  "description": "Deep dive into JavaScript concepts",
-  "credits": 4,
-  "instructor": "Dr. Johnson",
-  "studentsEnrolled": [],
-  "tags": ["javascript", "advanced"],
-  "status": "active"
+  "institution": "Centennial College",
+  "courseSubject": "COMP",
+  "courseNumber": "213",
+  "title": "Web Interface Design",
+  "description": "Learn modern web development with React and Node.js",
+  "credits": 3,
+  "prerequisites": ["COMP100"],
+  "corequisites": []
 }
 ```
-
-**Note:** The `owner` field is automatically set to the authenticated user's ID. Do not include it in the request.
 
 **Success Response (201):**
 ```json
@@ -417,21 +466,33 @@ Content-Type: application/json
   "success": true,
   "data": {
     "_id": "507f1f77bcf86cd799439012",
-    "title": "Advanced JavaScript",
-    "description": "Deep dive into JavaScript concepts",
-    "credits": 4,
-    "instructor": "Dr. Johnson",
-    "owner": "authenticated_user_uid",
-    "studentsEnrolled": [],
-    "tags": ["javascript", "advanced"],
-    "status": "active"
+    "id": "507f1f77bcf86cd799439012",
+    "institution": "Centennial College",
+    "courseSubject": "COMP",
+    "courseNumber": "213",
+    "courseCode": "COMP213",
+    "title": "Web Interface Design",
+    "credits": 3,
+    "numReviews": 0,
+    "avgDifficulty": null,
+    "avgUsefulness": null,
+    "avgWorkload": null,
+    "avgGradingFairness": null
   }
+}
+```
+
+**Error Response (409 - Duplicate):**
+```json
+{
+  "success": false,
+  "message": "Course already exists: Centennial College COMP213"
 }
 ```
 
 ---
 
-### 4. Update Course (Auth + Ownership Required)
+### 4. Update Course (Auth Required)
 **Endpoint:** `PUT /courses/:id`
 
 **Headers:**
@@ -443,10 +504,10 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  "title": "Advanced JavaScript - Updated",
-  "description": "Updated description",
-  "credits": 5,
-  "status": "archived"
+  "title": "Web Interface Design - Updated",
+  "description": "Updated course description",
+  "credits": 4,
+  "syllabusRevisionDate": "2025-09-01"
 }
 ```
 
@@ -456,24 +517,18 @@ Content-Type: application/json
   "success": true,
   "data": {
     "_id": "507f1f77bcf86cd799439012",
-    "title": "Advanced JavaScript - Updated",
-    "credits": 5,
-    "status": "archived"
+    "title": "Web Interface Design - Updated",
+    "credits": 4,
+    "syllabusRevisionDate": "2025-09-01T00:00:00Z"
   }
 }
 ```
 
-**Error Response (403 - Not Owner):**
-```json
-{
-  "success": false,
-  "message": "You are not authorized to perform this action. Only the course owner can modify it."
-}
-```
+**Note:** Aggregate fields (`avgDifficulty`, `numReviews`, etc.) cannot be manually updated.
 
 ---
 
-### 5. Delete Course (Auth + Ownership Required)
+### 5. Delete Course (Auth Required)
 **Endpoint:** `DELETE /courses/:id`
 
 **Headers:**
@@ -486,6 +541,244 @@ Authorization: Bearer <token>
 {
   "success": true,
   "message": "Course deleted successfully."
+}
+```
+
+---
+
+## Review Endpoints
+
+> **NEW (December 13, 2025):** Course review system with transcript-based eligibility.
+
+Reviews allow students to rate and comment on courses they've completed. Users can only review courses that appear in their academic transcript with a reviewable grade.
+
+### Review Schema
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `courseId` | ObjectId | Yes | Reference to Course |
+| `authorUid` | String | Auto | User's UID (set from auth token) |
+| `term` | String | Yes | Term taken: Fall, Winter, Spring, Summer, Q1-Q4 |
+| `year` | Number | Yes | Year taken (e.g., 2025) |
+| `difficulty` | Number | Yes | 1-5 scale |
+| `usefulness` | Number | Yes | 1-5 scale |
+| `workload` | Number | Yes | 1-5 scale |
+| `gradingFairness` | Number | Yes | 1-5 scale |
+| `tags` | Array | No | Controlled vocabulary tags (max 5) |
+| `comment` | String | No | Free-text comment (max 2000 chars) |
+| `isAnonymous` | Boolean | No | Hide author info (default: false) |
+| `status` | String | Auto | "active" or "deleted" |
+
+### Controlled Tags
+
+Reviews can include up to 5 tags from this list:
+- `engaging-lectures`, `great-professor`, `fair-grading`, `useful-content`, `well-organized`
+- `heavy-workload`, `challenging-exams`, `lots-of-projects`, `group-work-required`
+- `easy-A`, `attendance-mandatory`, `good-resources`, `industry-relevant`
+- `flexible-deadlines`, `poor-communication`
+
+---
+
+### 1. List Reviews for Course (Public - No Auth Required)
+**Endpoint:** `GET /reviews?courseId=:courseId`
+
+**Query Parameters:**
+- `courseId` (required) - Course ObjectId
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439020",
+      "courseId": "507f1f77bcf86cd799439011",
+      "authorUid": "user123",
+      "term": "Fall",
+      "year": 2025,
+      "difficulty": 4,
+      "usefulness": 5,
+      "workload": 4,
+      "gradingFairness": 4,
+      "tags": ["engaging-lectures", "useful-content"],
+      "comment": "Great course, learned a lot!",
+      "isAnonymous": false,
+      "status": "active",
+      "created": "2025-12-10T15:30:00Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+---
+
+### 2. Get Review by ID (Public - No Auth Required)
+**Endpoint:** `GET /reviews/:id`
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439020",
+    "courseId": "507f1f77bcf86cd799439011",
+    "authorUid": "user123",
+    "term": "Fall",
+    "year": 2025,
+    "difficulty": 4,
+    "usefulness": 5,
+    "workload": 4,
+    "gradingFairness": 4,
+    "tags": ["engaging-lectures"],
+    "comment": "Great course!",
+    "isAnonymous": false
+  }
+}
+```
+
+---
+
+### 3. Create Review (Auth Required + Transcript Eligibility)
+**Endpoint:** `POST /reviews`
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "courseId": "507f1f77bcf86cd799439011",
+  "term": "Fall",
+  "year": 2025,
+  "difficulty": 4,
+  "usefulness": 5,
+  "workload": 4,
+  "gradingFairness": 4,
+  "tags": ["engaging-lectures", "useful-content"],
+  "comment": "Excellent course with practical projects!",
+  "isAnonymous": false
+}
+```
+
+**Eligibility Requirements:**
+- User must have the course in their `academicRecords` (transcript)
+- The transcript entry must have a reviewable grade (A+, A, A-, B+, B, B-, C+, C, C-, D+, D, D-, F, P, W)
+- Grades `I` (Incomplete) cannot review
+- One review per user per course per term/year
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439020",
+    "courseId": "507f1f77bcf86cd799439011",
+    "authorUid": "authenticated_user_uid",
+    "term": "Fall",
+    "year": 2025,
+    "difficulty": 4,
+    "usefulness": 5
+  }
+}
+```
+
+**Error Response (403 - Not Eligible):**
+```json
+{
+  "success": false,
+  "message": "You are not eligible to review this course. You must have completed this course (found in your academic transcript with a reviewable grade)."
+}
+```
+
+**Error Response (403 - Duplicate Review):**
+```json
+{
+  "success": false,
+  "message": "You have already reviewed this course for Fall 2025"
+}
+```
+
+---
+
+### 4. Update Review (Auth + Author Required)
+**Endpoint:** `PUT /reviews/:id`
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "difficulty": 3,
+  "comment": "Updated my review after reflection"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439020",
+    "difficulty": 3,
+    "comment": "Updated my review after reflection",
+    "updated": "2025-12-11T10:00:00Z"
+  }
+}
+```
+
+---
+
+### 5. Delete Review (Auth + Author Required)
+**Endpoint:** `DELETE /reviews/:id`
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Review deleted successfully"
+}
+```
+
+**Note:** Deleting a review triggers automatic recalculation of the course's aggregate metrics.
+
+---
+
+### 6. Refresh Course Aggregates (Admin Only)
+**Endpoint:** `POST /reviews/admin/refresh-aggregates/:courseId`
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Description:** Manually trigger recalculation of course aggregate metrics. Useful for maintenance.
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "message": "Aggregates refreshed",
+  "data": {
+    "numReviews": 5,
+    "avgDifficulty": 3.6,
+    "avgUsefulness": 4.2,
+    "avgWorkload": 3.8,
+    "avgGradingFairness": 4.0,
+    "topTags": ["engaging-lectures", "useful-content"]
+  }
 }
 ```
 
@@ -878,6 +1171,10 @@ Authorization: Bearer <token>
 
 ## Dashboard Endpoints
 
+> **⚠️ BREAKING CHANGE (December 13, 2025):** Dashboard structure updated.
+> - `ownedCourses` → `enrolledCourses` (from user's academic transcript)
+> - Added `userReviews` section
+
 ### Get User Dashboard (Auth Required)
 **Endpoint:** `GET /dashboard/me`
 
@@ -897,15 +1194,46 @@ Authorization: Bearer <token>
       "lastName": "Smith",
       "email": "alice@example.com",
       "role": "student",
+      "schoolName": "Centennial College",
+      "programName": "Software Engineering",
       "profilePic": "...",
       "bio": "...",
       "linkedin": "...",
       "created": "2024-01-15T10:30:00Z",
       "updated": "2024-01-15T10:30:00Z"
     },
-    "ownedCourses": {
+    "enrolledCourses": {
       "count": 2,
-      "courses": [...]
+      "courses": [
+        {
+          "_id": "507f1f77bcf86cd799439011",
+          "institution": "Centennial College",
+          "courseSubject": "COMP",
+          "courseNumber": "213",
+          "title": "Web Interface Design",
+          "term": "Fall",
+          "year": 2025,
+          "grade": "A"
+        }
+      ]
+    },
+    "userReviews": {
+      "count": 1,
+      "reviews": [
+        {
+          "_id": "507f1f77bcf86cd799439020",
+          "courseId": {
+            "institution": "Centennial College",
+            "courseSubject": "COMP",
+            "courseNumber": "213",
+            "title": "Web Interface Design"
+          },
+          "term": "Fall",
+          "year": 2025,
+          "difficulty": 4,
+          "usefulness": 5
+        }
+      ]
     },
     "ownedProjects": {
       "count": 5,
@@ -918,6 +1246,8 @@ Authorization: Bearer <token>
   }
 }
 ```
+
+**Note:** `enrolledCourses` are derived from the user's `academicRecords` (transcript) and matched against the course catalog. Courses in transcript that don't exist in the catalog will not appear.
 
 ---
 

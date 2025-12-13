@@ -1,30 +1,26 @@
 const request = require('supertest');
 const express = require('express');
 const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-const CourseController = require('../App/Controllers/course');
 const CourseModel = require('../App/Models/course');
 const UserModel = require('../App/Models/user');
 const courseRouter = require('../App/Routers/course');
-const userRouter = require('../App/Routers/user');
 const authRouter = require('../App/Routers/auth');
 
 // Mock MongoDB connection
 jest.mock('../Config/db.js', () => jest.fn());
 
-describe('Course Controller', () => {
+describe('Course Controller - New Schema', () => {
   let app;
-  let courseId;
   let authToken;
   let testUid;
-  
+  let testCourseId;
+
   beforeAll(async () => {
     app = express();
     app.use(express.json());
     app.use('/api/auth', authRouter);
-    app.use('/api/users', userRouter);
     app.use('/api/courses', courseRouter);
 
     // Connect to test database
@@ -34,11 +30,11 @@ describe('Course Controller', () => {
       useUnifiedTopology: true,
     });
 
-    // Clear collections before tests
+    // Clear collections
     await UserModel.deleteMany({});
     await CourseModel.deleteMany({});
 
-    // Create a test user and get auth token
+    // Create test user
     const signupRes = await request(app)
       .post('/api/auth/signup')
       .send({
@@ -47,8 +43,8 @@ describe('Course Controller', () => {
         email: 'coursetest@example.com',
         password: 'TestPassword123',
         role: 'student',
-        schoolName: 'Test University',
-        programName: 'Computer Science'
+        schoolName: 'Centennial College',
+        programName: 'Software Engineering'
       });
 
     authToken = signupRes.body.data.token;
@@ -57,6 +53,7 @@ describe('Course Controller', () => {
 
   afterAll(async () => {
     await CourseModel.deleteMany({});
+    await UserModel.deleteMany({});
     await mongoose.connection.close();
   });
 
@@ -64,17 +61,20 @@ describe('Course Controller', () => {
     await CourseModel.deleteMany({});
   });
 
+  // ==========================================
+  // CREATE COURSE TESTS
+  // ==========================================
   describe('POST /api/courses - Create Course', () => {
-    it('should create a course with valid body', async () => {
-      const validCourse = {
-        title: 'Introduction to Web Development',
-        description: 'Learn the basics of web development',
-        credits: 4,
-        instructor: 'John Smith',
-        tags: ['web', 'beginner'],
-        status: 'active',
-      };
+    const validCourse = {
+      institution: 'Centennial College',
+      courseSubject: 'COMP',
+      courseNumber: '246',
+      title: 'Web Development',
+      description: 'Learn full-stack web development',
+      credits: 4
+    };
 
+    it('should create a course with valid data', async () => {
       const res = await request(app)
         .post('/api/courses')
         .set('Authorization', `Bearer ${authToken}`)
@@ -82,274 +82,475 @@ describe('Course Controller', () => {
         .expect(201);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.title).toBe('Introduction to Web Development');
-      expect(Array.isArray(res.body.data.tags)).toBe(true);
+      expect(res.body.data.institution).toBe('Centennial College');
+      expect(res.body.data.courseSubject).toBe('COMP');
+      expect(res.body.data.courseNumber).toBe('246');
+      expect(res.body.data.title).toBe('Web Development');
+      expect(res.body.data.courseCode).toBe('COMP 246');
     });
 
-    it('should accept tags as comma-separated string', async () => {
-      const course = {
-        title: 'Advanced JavaScript',
-        description: 'Master JavaScript concepts',
-        credits: 4,
-        instructor: 'Jane Doe',
-        tags: 'javascript, advanced, programming',
-        status: 'active',
+    it('should normalize courseSubject to uppercase', async () => {
+      const res = await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ ...validCourse, courseSubject: 'comp' })
+        .expect(201);
+
+      expect(res.body.data.courseSubject).toBe('COMP');
+    });
+
+    it('should reject duplicate course (same institution/subject/number)', async () => {
+      // Create first
+      await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(validCourse)
+        .expect(201);
+
+      // Try duplicate
+      const res = await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(validCourse)
+        .expect(409);
+
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('already exists');
+    });
+
+    it('should require institution', async () => {
+      const res = await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ ...validCourse, institution: '' })
+        .expect(400);
+
+      expect(res.body.message).toContain('Institution is required');
+    });
+
+    it('should require courseSubject', async () => {
+      const res = await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ ...validCourse, courseSubject: '' })
+        .expect(400);
+
+      expect(res.body.message).toContain('Course subject is required');
+    });
+
+    it('should require courseNumber', async () => {
+      const res = await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ ...validCourse, courseNumber: '' })
+        .expect(400);
+
+      expect(res.body.message).toContain('Course number is required');
+    });
+
+    it('should require title', async () => {
+      const res = await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ ...validCourse, title: '' })
+        .expect(400);
+
+      expect(res.body.message).toContain('Course title is required');
+    });
+
+    it('should validate courseSubject format (2-5 uppercase letters)', async () => {
+      const res = await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ ...validCourse, courseSubject: 'A' }) // Too short
+        .expect(400);
+
+      expect(res.body.message).toContain('2-5 uppercase letters');
+    });
+
+    it('should validate courseNumber format (2-4 digits)', async () => {
+      const res = await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ ...validCourse, courseNumber: '1' }) // Too short
+        .expect(400);
+
+      expect(res.body.message).toContain('2-4 digits');
+    });
+
+    it('should create course with prerequisites', async () => {
+      const courseWithPrereqs = {
+        ...validCourse,
+        prerequisites: [
+          { subject: 'COMP', number: '100' },
+          { subject: 'MATH', number: '181' }
+        ]
       };
 
       const res = await request(app)
         .post('/api/courses')
         .set('Authorization', `Bearer ${authToken}`)
-        .send(course)
+        .send(courseWithPrereqs)
         .expect(201);
 
-      expect(Array.isArray(res.body.data.tags)).toBe(true);
-      expect(res.body.data.tags).toContain('javascript');
-      expect(res.body.data.tags).toContain('advanced');
-      expect(res.body.data.tags).toContain('programming');
+      expect(res.body.data.prerequisites).toHaveLength(2);
+      expect(res.body.data.prerequisites[0].subject).toBe('COMP');
     });
 
-    it('should accept tags as array', async () => {
-      const course = {
-        title: 'React Fundamentals',
-        description: 'Learn React basics',
-        credits: 4,
-        instructor: 'Bob Johnson',
-        tags: ['react', 'frontend', 'javascript'],
-        status: 'active',
+    it('should create course with syllabusRevisionDate', async () => {
+      const courseWithSyllabus = {
+        ...validCourse,
+        syllabusRevisionDate: '2024-09-01'
       };
 
       const res = await request(app)
         .post('/api/courses')
         .set('Authorization', `Bearer ${authToken}`)
-        .send(course)
+        .send(courseWithSyllabus)
         .expect(201);
 
-      expect(Array.isArray(res.body.data.tags)).toBe(true);
-      expect(res.body.data.tags.length).toBe(3);
+      expect(res.body.data.syllabusRevisionDate).toBeTruthy();
     });
 
-    it('should default tags to empty array if not provided', async () => {
-      const course = {
-        title: 'Python Basics',
-        description: 'Introduction to Python',
-        credits: 3,
-        instructor: 'Alice Brown',
-        status: 'draft',
-      };
+    it('should require authentication', async () => {
+      const res = await request(app)
+        .post('/api/courses')
+        .send(validCourse)
+        .expect(401);
 
+      expect(res.body.success).toBe(false);
+    });
+
+    it('should initialize aggregates as null', async () => {
       const res = await request(app)
         .post('/api/courses')
         .set('Authorization', `Bearer ${authToken}`)
-        .send(course)
+        .send(validCourse)
         .expect(201);
 
-      expect(Array.isArray(res.body.data.tags)).toBe(true);
-      expect(res.body.data.tags.length).toBe(0);
+      expect(res.body.data.avgDifficulty).toBeNull();
+      expect(res.body.data.avgUsefulness).toBeNull();
+      expect(res.body.data.avgWorkload).toBeNull();
+      expect(res.body.data.avgGradingFairness).toBeNull();
+      expect(res.body.data.numReviews).toBe(0);
     });
   });
 
+  // ==========================================
+  // LIST COURSES TESTS
+  // ==========================================
   describe('GET /api/courses - List Courses', () => {
-    it('should return empty list when no courses exist', async () => {
-      const res = await request(app)
-        .get('/api/courses')
-        .expect(200);
-
-      expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.data)).toBe(true);
-      expect(res.body.data.length).toBe(0);
+    beforeEach(async () => {
+      // Create test courses
+      await CourseModel.create([
+        { institution: 'Centennial College', courseSubject: 'COMP', courseNumber: '100', title: 'Intro to Programming' },
+        { institution: 'Centennial College', courseSubject: 'COMP', courseNumber: '213', title: 'Web Development I' },
+        { institution: 'Centennial College', courseSubject: 'MATH', courseNumber: '181', title: 'Calculus' },
+        { institution: 'Other College', courseSubject: 'COMP', courseNumber: '100', title: 'Programming Basics' }
+      ]);
     });
 
-    it('should return all courses', async () => {
-      const courses = [
-        {
-          title: 'Course 1',
-          description: 'Description 1',
-          instructor: 'Instructor 1',
-          credits: 4,
-        },
-        {
-          title: 'Course 2',
-          description: 'Description 2',
-          instructor: 'Instructor 2',
-          credits: 4,
-        },
-      ];
-
-      for (const course of courses) {
-        await request(app)
-          .post('/api/courses')
-          .set('Authorization', `Bearer ${authToken}`)
-          .send(course);
-      }
-
+    it('should list all courses', async () => {
       const res = await request(app)
         .get('/api/courses')
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBe(4);
+      expect(res.body.pagination).toBeDefined();
+    });
+
+    it('should filter by institution', async () => {
+      const res = await request(app)
+        .get('/api/courses?institution=Centennial College')
+        .expect(200);
+
+      expect(res.body.data.length).toBe(3);
+      expect(res.body.data.every(c => c.institution === 'Centennial College')).toBe(true);
+    });
+
+    it('should filter by courseSubject', async () => {
+      const res = await request(app)
+        .get('/api/courses?courseSubject=MATH')
+        .expect(200);
+
+      expect(res.body.data.length).toBe(1);
+      expect(res.body.data[0].courseSubject).toBe('MATH');
+    });
+
+    it('should support pagination', async () => {
+      const res = await request(app)
+        .get('/api/courses?limit=2&skip=1')
+        .expect(200);
+
       expect(res.body.data.length).toBe(2);
+      expect(res.body.pagination.limit).toBe(2);
+      expect(res.body.pagination.skip).toBe(1);
+      expect(res.body.pagination.total).toBe(4);
     });
   });
 
-  describe('GET /api/courses/:id - Get Course by ID', () => {
-    it('should return course by id', async () => {
-      const course = {
-        title: 'Introduction to Web Development',
-        description: 'Learn the basics of web development',
-        credits: 4,
-        instructor: 'John Smith',
-      };
+  // ==========================================
+  // GET COURSE BY ID TESTS
+  // ==========================================
+  describe('GET /api/courses/:id - Get Course', () => {
+    let courseId;
 
-      const createRes = await request(app)
-        .post('/api/courses')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(course);
+    beforeEach(async () => {
+      const course = await CourseModel.create({
+        institution: 'Centennial College',
+        courseSubject: 'COMP',
+        courseNumber: '246',
+        title: 'Web Development'
+      });
+      courseId = course._id.toString();
+    });
 
-      const createdCourse = await CourseModel.findOne({ title: 'Introduction to Web Development' });
-      courseId = createdCourse._id;
-
+    it('should get course by ID', async () => {
       const res = await request(app)
         .get(`/api/courses/${courseId}`)
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.title).toBe('Introduction to Web Development');
-    });
-
-    it('should return null for non-existent course', async () => {
-      const fakeId = new mongoose.Types.ObjectId();
-
-      const res = await request(app)
-        .get(`/api/courses/${fakeId}`)
-        .expect(404);
-
-      expect(res.body.success).toBe(false);
-    });
-  });
-
-  describe('PUT /api/courses/:id - Update Course', () => {
-    beforeEach(async () => {
-      const course = {
-        title: 'Original Title',
-        description: 'Original description',
-        credits: 4,
-        instructor: 'Original Instructor',
-        tags: ['original'],
-        status: 'active',
-      };
-
-      const createRes = await request(app)
-        .post('/api/courses')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(course);
-
-      const createdCourse = await CourseModel.findOne({ title: 'Original Title' });
-      courseId = createdCourse._id;
-    });
-
-    it('should update course with valid data', async () => {
-      const updateData = {
-        title: 'Updated Title',
-        description: 'Updated description',
-      };
-
-      const res = await request(app)
-        .put(`/api/courses/${courseId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(200);
-
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.title).toBe('Updated Title');
-      expect(res.body.data.description).toBe('Updated description');
-    });
-
-    it('should update partial fields', async () => {
-      const updateData = {
-        credits: 4,
-      };
-
-      const res = await request(app)
-        .put(`/api/courses/${courseId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(200);
-
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.credits).toBe(4);
-      expect(res.body.data.title).toBe('Original Title'); // Should remain unchanged
+      expect(res.body.data.courseSubject).toBe('COMP');
+      expect(res.body.data.courseNumber).toBe('246');
     });
 
     it('should return 404 for non-existent course', async () => {
       const fakeId = new mongoose.Types.ObjectId();
-      const updateData = { title: 'Test' };
-
       const res = await request(app)
-        .put(`/api/courses/${fakeId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
+        .get(`/api/courses/${fakeId}`)
         .expect(404);
 
-      expect(res.body.success).toBe(false);
       expect(res.body.message).toBe('Course not found');
-    });
-
-    it('should update status to valid enum value', async () => {
-      const updateData = {
-        status: 'archived',
-      };
-
-      const res = await request(app)
-        .put(`/api/courses/${courseId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(200);
-
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.status).toBe('archived');
     });
   });
 
-  describe('DELETE /api/courses/:id - Delete Course', () => {
+  // ==========================================
+  // LOOKUP COURSE TESTS
+  // ==========================================
+  describe('GET /api/courses/lookup/:institution/:subject/:number', () => {
     beforeEach(async () => {
-      const course = {
-        title: 'Course to Delete',
-        description: 'This course will be deleted',
-        credits: 4,
-        instructor: 'Test Instructor',
-      };
-
-      const createRes = await request(app)
-        .post('/api/courses')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(course);
-
-      const createdCourse = await CourseModel.findOne({ title: 'Course to Delete' });
-      courseId = createdCourse._id;
+      await CourseModel.create({
+        institution: 'Centennial College',
+        courseSubject: 'COMP',
+        courseNumber: '246',
+        title: 'Web Development'
+      });
     });
 
-    it('should delete course successfully', async () => {
+    it('should find course by institution/subject/number', async () => {
+      const res = await request(app)
+        .get('/api/courses/lookup/Centennial College/COMP/246')
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.title).toBe('Web Development');
+    });
+
+    it('should handle case-insensitive subject lookup', async () => {
+      const res = await request(app)
+        .get('/api/courses/lookup/Centennial College/comp/246')
+        .expect(200);
+
+      expect(res.body.data.courseSubject).toBe('COMP');
+    });
+
+    it('should return 404 for non-existent course', async () => {
+      const res = await request(app)
+        .get('/api/courses/lookup/Centennial College/COMP/999')
+        .expect(404);
+
+      expect(res.body.message).toBe('Course not found');
+    });
+  });
+
+  // ==========================================
+  // UPDATE COURSE TESTS
+  // ==========================================
+  describe('PUT /api/courses/:id - Update Course', () => {
+    let courseId;
+
+    beforeEach(async () => {
+      const course = await CourseModel.create({
+        institution: 'Centennial College',
+        courseSubject: 'COMP',
+        courseNumber: '246',
+        title: 'Web Development',
+        description: 'Original description'
+      });
+      courseId = course._id.toString();
+    });
+
+    it('should update course metadata', async () => {
+      const res = await request(app)
+        .put(`/api/courses/${courseId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          title: 'Advanced Web Development',
+          description: 'Updated description',
+          credits: 5
+        })
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.title).toBe('Advanced Web Development');
+      expect(res.body.data.description).toBe('Updated description');
+      expect(res.body.data.credits).toBe(5);
+    });
+
+    it('should not allow direct aggregate updates', async () => {
+      const res = await request(app)
+        .put(`/api/courses/${courseId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          avgDifficulty: 5,
+          numReviews: 100
+        })
+        .expect(200);
+
+      // Aggregates should not change
+      const course = await CourseModel.findById(courseId);
+      expect(course.avgDifficulty).toBeNull();
+      expect(course.numReviews).toBe(0);
+    });
+
+    it('should require authentication', async () => {
+      const res = await request(app)
+        .put(`/api/courses/${courseId}`)
+        .send({ title: 'New Title' })
+        .expect(401);
+
+      expect(res.body.success).toBe(false);
+    });
+
+    it('should return 404 for non-existent course', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await request(app)
+        .put(`/api/courses/${fakeId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ title: 'New Title' })
+        .expect(404);
+
+      expect(res.body.message).toBe('Course not found');
+    });
+  });
+
+  // ==========================================
+  // DELETE COURSE TESTS
+  // ==========================================
+  describe('DELETE /api/courses/:id - Delete Course', () => {
+    let courseId;
+
+    beforeEach(async () => {
+      const course = await CourseModel.create({
+        institution: 'Centennial College',
+        courseSubject: 'COMP',
+        courseNumber: '246',
+        title: 'Web Development'
+      });
+      courseId = course._id.toString();
+    });
+
+    it('should delete course', async () => {
       const res = await request(app)
         .delete(`/api/courses/${courseId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
       expect(res.body.success).toBe(true);
-      expect(res.body.data.message).toContain('deleted successfully');
+      expect(res.body.message).toBe('Course deleted successfully');
 
-      // Verify course is deleted
-      const deletedCourse = await CourseModel.findById(courseId);
-      expect(deletedCourse).toBeNull();
+      // Verify deleted
+      const course = await CourseModel.findById(courseId);
+      expect(course).toBeNull();
     });
 
-    it('should return error when deleting non-existent course', async () => {
+    it('should return 404 for non-existent course', async () => {
       const fakeId = new mongoose.Types.ObjectId();
-
       const res = await request(app)
         .delete(`/api/courses/${fakeId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
+
+      expect(res.body.message).toBe('Course not found');
+    });
+
+    it('should require authentication', async () => {
+      const res = await request(app)
+        .delete(`/api/courses/${courseId}`)
+        .expect(401);
+
+      expect(res.body.success).toBe(false);
+    });
+  });
+
+  // ==========================================
+  // FIND OR CREATE TESTS
+  // ==========================================
+  describe('POST /api/courses/find-or-create', () => {
+    it('should create new course if not exists', async () => {
+      const res = await request(app)
+        .post('/api/courses/find-or-create')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          institution: 'Centennial College',
+          courseSubject: 'COMP',
+          courseNumber: '123',
+          title: 'New Course'
+        })
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.courseSubject).toBe('COMP');
+    });
+
+    it('should return existing course if exists', async () => {
+      // Create first
+      await CourseModel.create({
+        institution: 'Centennial College',
+        courseSubject: 'COMP',
+        courseNumber: '123',
+        title: 'Existing Course'
+      });
+
+      const res = await request(app)
+        .post('/api/courses/find-or-create')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          institution: 'Centennial College',
+          courseSubject: 'COMP',
+          courseNumber: '123'
+        })
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.title).toBe('Existing Course');
+    });
+
+    it('should generate default title if not provided', async () => {
+      const res = await request(app)
+        .post('/api/courses/find-or-create')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          institution: 'Centennial College',
+          courseSubject: 'COMP',
+          courseNumber: '999'
+        })
+        .expect(200);
+
+      expect(res.body.data.title).toBe('COMP 999');
+    });
+
+    it('should require authentication', async () => {
+      const res = await request(app)
+        .post('/api/courses/find-or-create')
+        .send({
+          institution: 'Centennial College',
+          courseSubject: 'COMP',
+          courseNumber: '123'
+        })
+        .expect(401);
 
       expect(res.body.success).toBe(false);
     });

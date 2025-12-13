@@ -1,13 +1,17 @@
-var Router = require("express").Router();
+const Router = require('express').Router();
 
-var CourseController = require('../Controllers/course');
-var AuthMiddleware = require('../Controllers/authMiddleware');
-var OwnershipMiddleware = require('../Controllers/ownershipMiddleware');
+const CourseController = require('../Controllers/course');
+const AuthMiddleware = require('../Controllers/authMiddleware');
 
+// Public routes
 Router.get('/', CourseController.list);
+Router.get('/:id', CourseController.getById);
+Router.get('/lookup/:institution/:subject/:number', CourseController.lookup);
+
+// Authenticated routes
 Router.post('/', AuthMiddleware.requireAuth, CourseController.create);
-Router.get('/:id', CourseController.inventoryByID);
-Router.put('/:id', AuthMiddleware.requireAuth, OwnershipMiddleware.checkCourseOwnership, CourseController.update);
-Router.delete('/:id', AuthMiddleware.requireAuth, OwnershipMiddleware.checkCourseOwnership, CourseController.delete);
+Router.post('/find-or-create', AuthMiddleware.requireAuth, CourseController.findOrCreate);
+Router.put('/:id', AuthMiddleware.requireAuth, CourseController.update);
+Router.delete('/:id', AuthMiddleware.requireAuth, CourseController.delete);
 
 module.exports = Router;

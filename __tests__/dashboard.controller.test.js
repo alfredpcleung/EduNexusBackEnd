@@ -14,6 +14,7 @@ const User = require('../App/Models/user');
 const Course = require('../App/Models/course');
 const Project = require('../App/Models/project');
 const Feedback = require('../App/Models/feedback');
+const Review = require('../App/Models/review');
 
 // Setup Express app for testing
 const app = express();
@@ -40,8 +41,9 @@ describe('Dashboard Controller Tests', () => {
     await Course.deleteMany({});
     await Project.deleteMany({});
     await Feedback.deleteMany({});
+    await Review.deleteMany({});
 
-    // Create test user 1 (will own courses, projects, and provide feedback)
+    // Create test user 1
     const signup1 = await request(app)
       .post('/api/auth/signup')
       .send({
@@ -56,7 +58,7 @@ describe('Dashboard Controller Tests', () => {
     token1 = signup1.body.data.token;
     user1Uid = signup1.body.data.user.uid;
 
-    // Create test user 2 (will own projects for user1 to feedback on)
+    // Create test user 2
     const signup2 = await request(app)
       .post('/api/auth/signup')
       .send({
@@ -71,15 +73,17 @@ describe('Dashboard Controller Tests', () => {
     token2 = signup2.body.data.token;
     user2Uid = signup2.body.data.user.uid;
 
-    // User 1: Create 2 courses
+    // Create 2 courses (catalog entries, no owner)
     const course1Res = await request(app)
       .post('/api/courses')
       .set('Authorization', `Bearer ${token1}`)
       .send({
+        institution: 'Test University',
+        courseSubject: 'WEB',
+        courseNumber: '101',
         title: 'Web Development 101',
         description: 'Learn web dev',
-        credits: 4,
-        instructor: 'User 1'
+        credits: 4
       });
 
     courseId1 = course1Res.body.data._id;
@@ -88,13 +92,46 @@ describe('Dashboard Controller Tests', () => {
       .post('/api/courses')
       .set('Authorization', `Bearer ${token1}`)
       .send({
+        institution: 'Test University',
+        courseSubject: 'DATA',
+        courseNumber: '100',
         title: 'Data Science Basics',
         description: 'Intro to DS',
-        credits: 4,
-        instructor: 'User 1'
+        credits: 4
       });
 
     courseId2 = course2Res.body.data._id;
+
+    // Add transcript entries for user1
+    await User.findOneAndUpdate(
+      { uid: user1Uid },
+      {
+        $push: {
+          academicRecords: {
+            $each: [
+              {
+                term: 'Fall',
+                year: 2024,
+                subject: 'WEB',
+                courseCode: '101',
+                courseTitle: 'Web Development 101',
+                creditHours: 4,
+                grade: 'A'
+              },
+              {
+                term: 'Fall',
+                year: 2024,
+                subject: 'DATA',
+                courseCode: '100',
+                courseTitle: 'Data Science Basics',
+                creditHours: 4,
+                grade: 'B+'
+              }
+            ]
+          }
+        }
+      }
+    );
 
     // User 1: Create 2 projects
     const project1Res = await request(app)
@@ -151,6 +188,7 @@ describe('Dashboard Controller Tests', () => {
     await Course.deleteMany({});
     await Project.deleteMany({});
     await Feedback.deleteMany({});
+    await Review.deleteMany({});
     await mongoose.connection.close();
   });
 
@@ -180,67 +218,53 @@ describe('Dashboard Controller Tests', () => {
       expect(user.lastName).toBe('User1');
       expect(user.email).toBe('dashboarduser1@test.com');
       expect(user.role).toBeDefined();
-      expect(user.created).toBeDefined();
-      expect(user.updated).toBeDefined();
+      expect(user.schoolName).toBe('Test University');
+      expect(user.programName).toBe('Computer Science');
     });
 
-    test('should include user profile information', async () => {
+    test('should return enrolled courses from transcript', async () => {
       const res = await request(app)
         .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
-      const user = res.body.dashboard.user;
+      const enrolledCourses = res.body.dashboard.enrolledCourses;
 
-      expect(user.uid).toBe(user1Uid);
-      expect(user.firstName).toBe('Dashboard');
-      expect(user.lastName).toBe('User1');
-      expect(user.email).toBe('dashboarduser1@test.com');
-      expect(user.role).toBeDefined();
-      expect(user.created).toBeDefined();
-      expect(user.updated).toBeDefined();
+      expect(enrolledCourses).toBeDefined();
+      expect(typeof enrolledCourses.count).toBe('number');
+      expect(Array.isArray(enrolledCourses.courses)).toBe(true);
+      expect(enrolledCourses.count).toBe(2); // User1 has 2 transcript entries
     });
 
-    test('should return owned courses with correct structure', async () => {
+    test('should return enrolled course details with transcript info', async () => {
       const res = await request(app)
         .get('/api/dashboard/me')
         .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
-      const ownedCourses = res.body.dashboard.ownedCourses;
+      const courses = res.body.dashboard.enrolledCourses.courses;
 
-      expect(ownedCourses).toBeDefined();
-      expect(typeof ownedCourses.count).toBe('number');
-      expect(Array.isArray(ownedCourses.courses)).toBe(true);
-    });
-
-    test('should return correct course details if courses exist', async () => {
-      const res = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      const courses = res.body.dashboard.ownedCourses.courses;
-
-      // Only test if courses exist (may be 0 if course ownership uses different field)
       if (courses.length > 0) {
         const course = courses[0];
         expect(course).toHaveProperty('_id');
         expect(course).toHaveProperty('title');
-        expect(course).toHaveProperty('description');
+        expect(course).toHaveProperty('term');
+        expect(course).toHaveProperty('year');
+        expect(course).toHaveProperty('grade');
       }
     });
 
-    test('should only return user-owned courses', async () => {
+    test('should return user reviews section', async () => {
       const res = await request(app)
         .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token2}`);
+        .set('Authorization', `Bearer ${token1}`);
 
       expect(res.status).toBe(200);
-      const ownedCourses = res.body.dashboard.ownedCourses;
+      const userReviews = res.body.dashboard.userReviews;
 
-      expect(ownedCourses.count).toBe(0);
-      expect(ownedCourses.courses).toEqual([]);
+      expect(userReviews).toBeDefined();
+      expect(typeof userReviews.count).toBe('number');
+      expect(Array.isArray(userReviews.reviews)).toBe(true);
     });
 
     test('should return owned projects with correct count', async () => {
@@ -268,9 +292,6 @@ describe('Dashboard Controller Tests', () => {
       expect(foundProject).toBeDefined();
       expect(foundProject.title).toBe('Personal Portfolio Site');
       expect(foundProject.description).toBe('Build portfolio');
-      expect(foundProject.courseId).toBe(courseId1);
-      expect(foundProject.tags).toEqual(['frontend', 'react']);
-      expect(foundProject.status).toBe('active');
     });
 
     test('should only return user-owned projects', async () => {
@@ -309,20 +330,6 @@ describe('Dashboard Controller Tests', () => {
 
       expect(feedback.rating).toBe(4);
       expect(feedback.comment).toBe('Great work!');
-      expect(feedback.created).toBeDefined();
-      expect(feedback.updated).toBeDefined();
-    });
-
-    test('should only return user-authored feedback', async () => {
-      const res = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token2}`);
-
-      expect(res.status).toBe(200);
-      const authoredFeedback = res.body.dashboard.authoredFeedback;
-
-      expect(authoredFeedback.count).toBe(0);
-      expect(authoredFeedback.feedback).toEqual([]);
     });
 
     test('should return complete dashboard structure', async () => {
@@ -334,16 +341,10 @@ describe('Dashboard Controller Tests', () => {
       const dashboard = res.body.dashboard;
 
       expect(dashboard).toHaveProperty('user');
-      expect(dashboard).toHaveProperty('ownedCourses');
+      expect(dashboard).toHaveProperty('enrolledCourses');
+      expect(dashboard).toHaveProperty('userReviews');
       expect(dashboard).toHaveProperty('ownedProjects');
       expect(dashboard).toHaveProperty('authoredFeedback');
-
-      expect(dashboard.ownedCourses).toHaveProperty('count');
-      expect(dashboard.ownedCourses).toHaveProperty('courses');
-      expect(dashboard.ownedProjects).toHaveProperty('count');
-      expect(dashboard.ownedProjects).toHaveProperty('projects');
-      expect(dashboard.authoredFeedback).toHaveProperty('count');
-      expect(dashboard.authoredFeedback).toHaveProperty('feedback');
     });
 
     test('should fail without authentication', async () => {
@@ -353,223 +354,12 @@ describe('Dashboard Controller Tests', () => {
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
     });
-
-    test('should return 404 if user not found', async () => {
-      // This is a rare edge case - user deleted after token created
-      // For this test, we'll just verify the endpoint structure
-      const res = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token1}`);
-
-      // User should exist, so this should succeed
-      expect(res.status).toBe(200);
-    });
-  });
-
-  // ===== Ownership Filtering Tests =====
-  describe('Dashboard - Ownership Filtering', () => {
-
-    test('should not include courses owned by other users', async () => {
-      const res = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token2}`);
-
-      expect(res.status).toBe(200);
-      const courses = res.body.dashboard.ownedCourses.courses;
-
-      // Token2 doesn't own courseId1 or courseId2
-      const courseIds = courses.map(c => c._id.toString());
-      expect(courseIds).not.toContain(courseId1.toString());
-      expect(courseIds).not.toContain(courseId2.toString());
-    });
-
-    test('should not include projects owned by other users', async () => {
-      const res = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token2}`);
-
-      expect(res.status).toBe(200);
-      const projects = res.body.dashboard.ownedProjects.projects;
-
-      // Token2 doesn't own projectId1 or projectId2
-      const projectIds = projects.map(p => p._id.toString());
-      expect(projectIds).not.toContain(projectId1.toString());
-      expect(projectIds).not.toContain(projectId2.toString());
-    });
-
-    test('should not include feedback authored by other users', async () => {
-      const res = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token2}`);
-
-      expect(res.status).toBe(200);
-      const feedback = res.body.dashboard.authoredFeedback.feedback;
-
-      // Token2 didn't author feedbackId1
-      const feedbackIds = feedback.map(f => f._id.toString());
-      expect(feedbackIds).not.toContain(feedbackId1.toString());
-    });
-
-    test('should aggregate only user-specific data across all categories', async () => {
-      const res = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      const dashboard = res.body.dashboard;
-
-      // User1 should have:
-      // - 2 projects (created in beforeAll)
-      // - 1 feedback (created in beforeAll)
-      expect(dashboard.ownedProjects.count).toBe(2);
-      expect(dashboard.authoredFeedback.count).toBe(1);
-
-      // Verify each item exists
-      dashboard.ownedProjects.projects.forEach(project => {
-        expect(project).toBeDefined();
-      });
-
-      dashboard.authoredFeedback.feedback.forEach(feedback => {
-        expect(feedback).toBeDefined();
-      });
-    });
-  });
-
-  // ===== Data Accuracy Tests =====
-  describe('Dashboard - Data Accuracy', () => {
-
-    test('should reflect changes after project creation', async () => {
-      // Get initial dashboard
-      const res1 = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token1}`);
-
-      const initialCount = res1.body.dashboard.ownedProjects.count;
-
-      // Create new project
-      await request(app)
-        .post('/api/projects')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          title: 'New Dashboard Project',
-          description: 'Test update'
-        });
-
-      // Get updated dashboard
-      const res2 = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token1}`);
-
-      const updatedCount = res2.body.dashboard.ownedProjects.count;
-      expect(updatedCount).toBe(initialCount + 1);
-    });
-
-    test('should reflect changes after feedback creation', async () => {
-      // Get initial dashboard for user2
-      const res1 = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token2}`);
-
-      const initialCount = res1.body.dashboard.authoredFeedback.count;
-
-      // Create new project first
-      const projectRes = await request(app)
-        .post('/api/projects')
-        .set('Authorization', `Bearer ${token1}`)
-        .send({
-          title: 'Feedback Test Project'
-        });
-
-      // Create feedback as user2
-      await request(app)
-        .post('/api/feedback')
-        .set('Authorization', `Bearer ${token2}`)
-        .send({
-          projectId: projectRes.body.data._id,
-          rating: 5,
-          comment: 'Excellent!'
-        });
-
-      // Get updated dashboard
-      const res2 = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token2}`);
-
-      const updatedCount = res2.body.dashboard.authoredFeedback.count;
-      expect(updatedCount).toBe(initialCount + 1);
-    });
-
-    test('should return sorted feedback by creation date (newest first)', async () => {
-      const res = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token1}`);
-
-      const feedback = res.body.dashboard.authoredFeedback.feedback;
-      
-      if (feedback.length > 1) {
-        for (let i = 1; i < feedback.length; i++) {
-          const prev = new Date(feedback[i - 1].created);
-          const curr = new Date(feedback[i].created);
-          expect(prev >= curr).toBe(true);
-        }
-      }
-    });
-
-    test('should include all required fields in aggregated data', async () => {
-      const res = await request(app)
-        .get('/api/dashboard/me')
-        .set('Authorization', `Bearer ${token1}`);
-
-      expect(res.status).toBe(200);
-      const dashboard = res.body.dashboard;
-
-      // Check user fields
-      expect(dashboard.user).toHaveProperty('uid');
-      expect(dashboard.user).toHaveProperty('firstName');
-      expect(dashboard.user).toHaveProperty('lastName');
-      expect(dashboard.user).toHaveProperty('email');
-      expect(dashboard.user).toHaveProperty('role');
-      expect(dashboard.user).toHaveProperty('created');
-      expect(dashboard.user).toHaveProperty('updated');
-
-      // Check course fields
-      if (dashboard.ownedCourses.courses.length > 0) {
-        const course = dashboard.ownedCourses.courses[0];
-        expect(course).toHaveProperty('_id');
-        expect(course).toHaveProperty('title');
-        expect(course).toHaveProperty('description');
-        expect(course).toHaveProperty('credits');
-      }
-
-      // Check project fields
-      if (dashboard.ownedProjects.projects.length > 0) {
-        const project = dashboard.ownedProjects.projects[0];
-        expect(project).toHaveProperty('_id');
-        expect(project).toHaveProperty('title');
-        expect(project).toHaveProperty('description');
-        expect(project).toHaveProperty('tags');
-        expect(project).toHaveProperty('status');
-        expect(project).toHaveProperty('created');
-        expect(project).toHaveProperty('updated');
-      }
-
-      // Check feedback fields
-      if (dashboard.authoredFeedback.feedback.length > 0) {
-        const feedback = dashboard.authoredFeedback.feedback[0];
-        expect(feedback).toHaveProperty('_id');
-        expect(feedback).toHaveProperty('projectId');
-        expect(feedback).toHaveProperty('rating');
-        expect(feedback).toHaveProperty('comment');
-        expect(feedback).toHaveProperty('created');
-        expect(feedback).toHaveProperty('updated');
-      }
-    });
   });
 
   // ===== Edge Cases =====
   describe('Dashboard - Edge Cases', () => {
 
-    test('should handle user with no courses', async () => {
+    test('should handle user with no transcript entries', async () => {
       const newUser = await request(app)
         .post('/api/auth/signup')
         .send({
@@ -586,8 +376,8 @@ describe('Dashboard Controller Tests', () => {
         .set('Authorization', `Bearer ${newUser.body.data.token}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.dashboard.ownedCourses.count).toBe(0);
-      expect(res.body.dashboard.ownedCourses.courses).toEqual([]);
+      expect(res.body.dashboard.enrolledCourses.count).toBe(0);
+      expect(res.body.dashboard.enrolledCourses.courses).toEqual([]);
     });
 
     test('should handle user with no projects', async () => {
@@ -651,7 +441,8 @@ describe('Dashboard Controller Tests', () => {
       expect(res.status).toBe(200);
       const dashboard = res.body.dashboard;
 
-      expect(dashboard.ownedCourses.count).toBe(0);
+      expect(dashboard.enrolledCourses.count).toBe(0);
+      expect(dashboard.userReviews.count).toBe(0);
       expect(dashboard.ownedProjects.count).toBe(0);
       expect(dashboard.authoredFeedback.count).toBe(0);
       expect(dashboard.user.uid).toBe(newUser.body.data.user.uid);

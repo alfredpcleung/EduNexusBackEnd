@@ -97,10 +97,12 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
         .post('/api/courses')
         .set('Authorization', `Bearer ${token1}`)
         .send({
+          institution: 'Test University',
+          courseSubject: 'WEB',
+          courseNumber: '101',
           title: 'Web Development 101',
           description: 'Learn web dev',
-          credits: 4,
-          instructor: 'Alice'
+          credits: 4
         });
 
       expect(res.status).toBe(201);
@@ -453,7 +455,7 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
       expect(res.body.dashboard.user.uid).toBe(user2Uid);
       expect(res.body.dashboard.user.firstName).toBe('Bob');
       expect(res.body.dashboard.user.lastName).toBe('TestUser');
-      expect(res.body.dashboard.ownedCourses.count).toBe(0);
+      expect(res.body.dashboard.enrolledCourses.count).toBe(0);
       expect(res.body.dashboard.ownedProjects.count).toBe(0);
     });
 
@@ -479,11 +481,14 @@ describe('Tier 1: Projects & Feedback - Integration Tests', () => {
 
       const dashboard = res.body.dashboard;
       expect(dashboard).toHaveProperty('user');
-      expect(dashboard).toHaveProperty('ownedCourses');
+      expect(dashboard).toHaveProperty('enrolledCourses');
+      expect(dashboard).toHaveProperty('userReviews');
       expect(dashboard).toHaveProperty('ownedProjects');
       expect(dashboard).toHaveProperty('authoredFeedback');
-      expect(dashboard.ownedCourses).toHaveProperty('count');
-      expect(dashboard.ownedCourses).toHaveProperty('courses');
+      expect(dashboard.enrolledCourses).toHaveProperty('count');
+      expect(dashboard.enrolledCourses).toHaveProperty('courses');
+      expect(dashboard.userReviews).toHaveProperty('count');
+      expect(dashboard.userReviews).toHaveProperty('reviews');
       expect(dashboard.ownedProjects).toHaveProperty('count');
       expect(dashboard.ownedProjects).toHaveProperty('projects');
       expect(dashboard.authoredFeedback).toHaveProperty('count');

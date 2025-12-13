@@ -1,10 +1,10 @@
 # EduNexus Backend
 
-A secure Node.js/Express backend for the EduNexus educational platform with JWT authentication, course management, projects, feedback, and user management features.
+A secure Node.js/Express backend for the EduNexus educational platform with JWT authentication, course catalog, course reviews, projects, feedback, and user management features.
 
-**Status:** ✅ Production Ready - All 193 Tests Passing  
+**Status:** ✅ Production Ready - All 265 Tests Passing  
 **Backend URL:** https://edunexusbackend-mi24.onrender.com  
-**Last Updated:** December 12, 2025
+**Last Updated:** December 13, 2025
 
 ---
 
@@ -23,12 +23,22 @@ A secure Node.js/Express backend for the EduNexus educational platform with JWT 
 - 7-day JWT token expiration
 - Bcrypt password hashing (never stored in plain text)
 
-✅ **Course Management**
-- Create, read, update, delete courses
-- Course ownership enforcement (owner field uses user `uid`)
-- Only course owners can modify their courses
+✅ **Course Catalog**
+- Courses as institution catalog entries (no ownership model)
+- Compound unique identifier: institution + courseSubject + courseNumber
 - Public read access for all users
-- Tags, credits, and status tracking
+- Any authenticated user can create courses
+- Prerequisites and corequisites tracking
+- Auto-calculated review aggregates (difficulty, usefulness, workload, grading fairness)
+
+✅ **Course Review System**
+- Create, read, update, delete course reviews
+- Transcript-based eligibility (must have completed course)
+- 1-5 scale ratings for difficulty, usefulness, workload, grading fairness
+- Controlled vocabulary tags (15 predefined tags)
+- One review per user per course per term/year
+- Aggregate metrics auto-calculated (null if < 3 reviews)
+- Admin endpoint for manual aggregate refresh
 
 ✅ **Project Management** (Tier 1)
 - Create, read, update, delete projects
@@ -46,9 +56,9 @@ A secure Node.js/Express backend for the EduNexus educational platform with JWT 
 - Admin users can manage any feedback
 
 ✅ **User Dashboard**
-- Aggregated user data (courses, projects, feedback)
+- Aggregated user data (enrolled courses, reviews, projects, feedback)
 - Single `/dashboard/me` endpoint for complete user overview
-- Shows owned courses, owned projects, and authored feedback with counts
+- Shows enrolled courses (from transcript), user reviews, owned projects, authored feedback
 - Protected with JWT authentication
 
 ✅ **User Management**
@@ -76,15 +86,16 @@ A secure Node.js/Express backend for the EduNexus educational platform with JWT 
 - Environment variable protection for secrets
 
 ✅ **Testing**
-- 193 comprehensive automated tests
+- 265 comprehensive automated tests
 - Authentication tests (27 tests)
-- Course CRUD tests (41 tests)
+- Course CRUD tests (33 tests)
+- Review system tests (29 tests)
 - Project management tests (45 tests)
 - Feedback system tests (40 tests)
-- Dashboard aggregation tests (16 tests)
+- Dashboard aggregation tests (17 tests)
 - Tier 1 integration tests (16 tests)
-- Misc tests (8 tests)
-- Ownership enforcement tests
+- GPA calculation tests (35 tests)
+- Misc tests (23 tests)
 - Security validation tests
 
 ---
@@ -157,15 +168,20 @@ npm test
 npm test -- __tests__/project.controller.test.js
 npm test -- __tests__/feedback.controller.test.js
 npm test -- __tests__/dashboard.controller.test.js
+npm test -- __tests__/review.controller.test.js
 ```
 
 **Test Coverage:**
-- Total: 101 tests
-- Phase 1 (Auth): 27 tests ✅
-- Phase 2 (Courses): 41 tests ✅
-- Phase 3 (Projects): 45 tests ✅
-- Phase 3 (Feedback): 40 tests ✅
-- Phase 3 (Dashboard): 16 tests ✅
+- Total: 265 tests
+- Authentication: 27 tests ✅
+- Courses: 33 tests ✅
+- Reviews: 29 tests ✅
+- Projects: 45 tests ✅
+- Feedback: 40 tests ✅
+- Dashboard: 17 tests ✅
+- GPA Service: 35 tests ✅
+- Integration: 16 tests ✅
+- Auth CRUD: 23 tests ✅
 
 ## API Structure
 
@@ -181,11 +197,19 @@ npm test -- __tests__/dashboard.controller.test.js
 - `DELETE /api/users/:uid` - Delete user (requires auth)
 
 ### Courses
-- `GET /api/courses` - List all courses
+- `GET /api/courses` - List all courses (with filters)
 - `POST /api/courses` - Create course (requires auth)
 - `GET /api/courses/:id` - Get course by ID
-- `PUT /api/courses/:id` - Update course (owner only)
-- `DELETE /api/courses/:id` - Delete course (owner only)
+- `PUT /api/courses/:id` - Update course (requires auth)
+- `DELETE /api/courses/:id` - Delete course (requires auth)
+
+### Reviews
+- `GET /api/reviews?courseId=:id` - List reviews for course
+- `POST /api/reviews` - Create review (requires auth + transcript eligibility)
+- `GET /api/reviews/:id` - Get review by ID
+- `PUT /api/reviews/:id` - Update review (author only)
+- `DELETE /api/reviews/:id` - Delete review (author only)
+- `POST /api/reviews/admin/refresh-aggregates/:courseId` - Refresh aggregates (admin only)
 
 ### Projects (Tier 1)
 - `GET /api/projects` - List all projects (with filters)
