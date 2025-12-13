@@ -222,29 +222,32 @@ vercel --prod
 ## Authentication Endpoints
 
 ### 1. Sign Up (Register)
-**Endpoint:** `POST /auth/signup`
+**Endpoint:** `POST /api/auth/signup`
 
 **Request Body:**
 ```json
 {
-  "displayName": "John Doe",
+  "firstName": "John",
+  "lastName": "Doe",
   "email": "john@example.com",
   "password": "securepassword123",
-  "role": "student"
+  "role": "student",
+  "schoolName": "Test University",
+  "programName": "Computer Science"
 }
 ```
 
-**Note:** The `uid` field is optional and will be auto-generated if not provided. Valid roles: "student", "instructor", "admin" (default: "student")
+**Note:** For student role, `schoolName` and `programName` are required. Valid roles: "student", "admin" (default: "student")
 
 **Success Response (201):**
 ```json
 {
   "success": true,
-  "message": "User created successfully",
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "user": {
-      "displayName": "John Doe",
+      "firstName": "John",
+      "lastName": "Doe",
       "email": "john@example.com",
       "role": "student",
       "uid": "user_1702310400123_a1b2c3d4e"
@@ -264,7 +267,7 @@ vercel --prod
 ---
 
 ### 2. Sign In (Login)
-**Endpoint:** `POST /auth/signin`
+**Endpoint:** `POST /api/auth/signin`
 
 **Request Body:**
 ```json
@@ -278,11 +281,11 @@ vercel --prod
 ```json
 {
   "success": true,
-  "message": "Sign in successful",
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "user": {
-      "displayName": "John Doe",
+      "firstName": "John",
+      "lastName": "Doe",
       "email": "john@example.com",
       "role": "student",
       "uid": "user_1702310400123_a1b2c3d4e"
@@ -500,9 +503,12 @@ Authorization: Bearer <token>
   "data": [
     {
       "uid": "user123",
-      "displayName": "John Doe",
+      "firstName": "John",
+      "lastName": "Doe",
       "email": "john@example.com",
       "role": "student",
+      "schoolName": "Test University",
+      "programName": "Computer Science",
       "enrolledCourses": ["course_id_1", "course_id_2"],
       "profilePic": "https://...",
       "bio": "Short biography",
@@ -527,9 +533,12 @@ Authorization: Bearer <token>
   "success": true,
   "data": {
     "uid": "user123",
-    "displayName": "John Doe",
+    "firstName": "John",
+    "lastName": "Doe",
     "email": "john@example.com",
     "role": "student",
+    "schoolName": "Test University",
+    "programName": "Computer Science",
     "enrolledCourses": ["course_id_1", "course_id_2"],
     "profilePic": "https://...",
     "bio": "Short biography",
@@ -552,7 +561,8 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  "displayName": "John Updated",
+  "firstName": "John",
+  "lastName": "Updated",
   "bio": "Updated biography",
   "profilePic": "https://new-image-url.com/pic.jpg",
   "linkedin": "https://linkedin.com/in/johndoe-updated"
@@ -565,7 +575,8 @@ Content-Type: application/json
   "success": true,
   "data": {
     "uid": "user123",
-    "displayName": "John Updated",
+    "firstName": "John",
+    "lastName": "Updated",
     "email": "john@example.com",
     "role": "student",
     "bio": "Updated biography",
@@ -757,10 +768,6 @@ Authorization: Bearer <token>
       "_id": "507f1f77bcf86cd799439014",
       "projectId": "project_id_here",
       "authorId": "user_uid_here",
-      "author": {
-        "displayName": "John Doe",
-        "uid": "user_uid_here"
-      },
       "rating": 4,
       "comment": "Great project!",
       "created": "2024-12-11T10:30:00Z",
@@ -770,8 +777,6 @@ Authorization: Bearer <token>
   "count": 3
 }
 ```
-
-**Note:** The `author` object includes `displayName` for easy display in frontend without additional API calls.
 
 ---
 
@@ -801,10 +806,6 @@ Content-Type: application/json
     "_id": "507f1f77bcf86cd799439014",
     "projectId": "project_id_here",
     "authorId": "authenticated_user_uid",
-    "author": {
-      "displayName": "John Doe",
-      "uid": "authenticated_user_uid"
-    },
     "rating": 4,
     "comment": "Great project!",
     "created": "2024-12-11T10:30:00Z",
@@ -848,10 +849,6 @@ Content-Type: application/json
     "_id": "507f1f77bcf86cd799439014",
     "projectId": "project_id_here",
     "authorId": "authenticated_user_uid",
-    "author": {
-      "displayName": "John Doe",
-      "uid": "authenticated_user_uid"
-    },
     "rating": 5,
     "comment": "Actually, this was excellent!",
     "updated": "2024-12-11T11:30:00Z"
@@ -893,10 +890,11 @@ Authorization: Bearer <token>
 ```json
 {
   "success": true,
-  "data": {
+  "dashboard": {
     "user": {
       "uid": "user_uid",
-      "displayName": "Alice",
+      "firstName": "Alice",
+      "lastName": "Smith",
       "email": "alice@example.com",
       "role": "student",
       "profilePic": "...",
@@ -963,7 +961,7 @@ Authorization: Bearer <token>
 ```json
 {
   "success": false,
-  "message": "Missing required fields: displayName, email, password"
+  "message": "Missing required fields: firstName, lastName, email, password"
 }
 ```
 
@@ -982,14 +980,14 @@ Authorization: Bearer <token>
 ### JavaScript Example: Signup with Token Storage
 
 ```javascript
-async function signup(displayName, email, password) {
+async function signup(firstName, lastName, email, password, schoolName, programName) {
   const response = await fetch('http://localhost:3000/api/auth/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ displayName, email, password })
+    body: JSON.stringify({ firstName, lastName, email, password, role: 'student', schoolName, programName })
   });
   const data = await response.json();
-  if (data.data.token) {
+  if (data.data?.token) {
     localStorage.setItem('authToken', data.data.token);
     localStorage.setItem('user', JSON.stringify(data.data.user));
   }
@@ -1007,7 +1005,7 @@ async function signin(email, password) {
     body: JSON.stringify({ email, password })
   });
   const data = await response.json();
-  if (data.data.token) {
+  if (data.data?.token) {
     localStorage.setItem('authToken', data.data.token);
     localStorage.setItem('user', JSON.stringify(data.data.user));
   }
@@ -1045,7 +1043,7 @@ async function createCourse(courseData) {
 
 ### Frontend Implementation Checklist
 
-- [ ] Implement Sign Up form with fields: displayName, email, password
+- [ ] Implement Sign Up form with fields: firstName, lastName, email, password, schoolName, programName
 - [ ] Implement Sign In form with fields: email, password
 - [ ] Store token in localStorage after successful auth
 - [ ] Create utility function to add Authorization header to requests
@@ -1054,7 +1052,7 @@ async function createCourse(courseData) {
 - [ ] Protect course creation form (only authenticated users)
 - [ ] Implement course ownership check (only owner can edit/delete)
 - [ ] Add error handling for 401 (unauthorized) responses
-- [ ] Display user data (displayName, role, email, uid) after login
+- [ ] Display user data (firstName, lastName, role, email, uid) after login
 - [ ] Test signup → login → create course flow
 
 ---

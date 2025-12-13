@@ -1,16 +1,13 @@
-const jwt = require('jsonwebtoken');
+const { generateToken } = require('../Utils/tokenManager');
 const UserModel = require('../Models/user');
 const errorResponse = require('../Utils/errorResponse');
 
-// Debug: Check if JWT_SECRET is loaded
-if (!process.env.JWT_SECRET) {
-    console.error('⚠️  WARNING: JWT_SECRET is not defined in environment!');
-    console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('JWT') || k.includes('ATLAS')));
-} else {
-    console.log('✅ JWT_SECRET is loaded successfully');
-}
-
-// Sign Up - Create a new user
+/**
+ * POST /api/auth/signup
+ * Register a new user and return JWT token
+ * Required: firstName, lastName, email, password
+ * For students: schoolName, programName also required
+ */
 module.exports.signup = async function (req, res, next) {
     try {
         const { uid, firstName, lastName, email, password, role, schoolName, programName, github, personalWebsite, linkedin, bio, profilePic } = req.body;
@@ -39,7 +36,7 @@ module.exports.signup = async function (req, res, next) {
 
         // Create new user (uid will be auto-generated if not provided)
         const newUser = new UserModel({
-            uid: uid || undefined, // Let the model generate it if not provided
+            uid: uid || undefined,
             firstName,
             lastName,
             email,
@@ -58,15 +55,11 @@ module.exports.signup = async function (req, res, next) {
         await newUser.save();
 
         // Generate JWT token
-        const token = jwt.sign(
-            { 
-                userId: newUser._id,
-                uid: newUser.uid,
-                email: newUser.email
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
+        const token = generateToken({ 
+            userId: newUser._id,
+            uid: newUser.uid,
+            email: newUser.email
+        });
 
         res.status(201).json({
             success: true,
@@ -83,12 +76,15 @@ module.exports.signup = async function (req, res, next) {
         });
 
     } catch (error) {
-        console.log(error);
         next(error);
     }
 };
 
-// Sign In - Authenticate user
+/**
+ * POST /api/auth/signin
+ * Authenticate user and return JWT token
+ * Required: email, password
+ */
 module.exports.signin = async function (req, res, next) {
     try {
         const { email, password } = req.body;
@@ -111,15 +107,11 @@ module.exports.signin = async function (req, res, next) {
         }
 
         // Generate JWT token
-        const token = jwt.sign(
-            { 
-                userId: user._id,
-                uid: user.uid,
-                email: user.email
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
+        const token = generateToken({ 
+            userId: user._id,
+            uid: user.uid,
+            email: user.email
+        });
 
         res.json({
             success: true,
@@ -136,7 +128,6 @@ module.exports.signin = async function (req, res, next) {
         });
 
     } catch (error) {
-        console.log(error);
         next(error);
     }
 };

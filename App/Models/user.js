@@ -116,6 +116,17 @@ UserSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
+/**
+ * Calculate GPA from user's academic records
+ * Delegates to transcriptService for calculation logic
+ * @param {string} [scheme='centennial'] - GPA scheme ('centennial', 'us', 'ects')
+ * @returns {number|null} GPA rounded to 3 decimal places, or null if no valid grades
+ */
+UserSchema.methods.calculateGPA = function (scheme = 'centennial') {
+  const transcriptService = require('../Services/transcriptService');
+  return transcriptService.calculateGPA(this.academicRecords, scheme);
+};
+
 UserSchema.set('toJSON', {
   versionKey: false,
   transform: function (doc, ret) {

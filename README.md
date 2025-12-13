@@ -18,10 +18,10 @@ A secure Node.js/Express backend for the EduNexus educational platform with JWT 
 
 ✅ **Authentication & Authorization**
 - User signup with auto-generated unique ID
-- User signin with JWT tokens
-- 7-day token expiration
+- First/Last name support (split from displayName for flexibility)
+- Role-based access control (student, admin)
+- 7-day JWT token expiration
 - Bcrypt password hashing (never stored in plain text)
-- Role-based access control (student, instructor, admin)
 
 ✅ **Course Management**
 - Create, read, update, delete courses
@@ -40,9 +40,7 @@ A secure Node.js/Express backend for the EduNexus educational platform with JWT 
 
 ✅ **Feedback System** (Tier 1)
 - Create, read, update, delete feedback on projects
-- 1-5 star rating system
-- Comment support
-- Author displayName included in all feedback responses (no extra lookups needed)
+- 1-5 star rating system with comments
 - Unique feedback per author per project (compound index)
 - Only feedback authors can modify/delete their feedback
 - Admin users can manage any feedback
@@ -55,9 +53,18 @@ A secure Node.js/Express backend for the EduNexus educational platform with JWT 
 
 ✅ **User Management**
 - User profiles with avatar, bio, LinkedIn
+- Global compatibility: flexible school/program names
+- Academic record tracking with flexible credit systems (Credit Hours, ECTS)
 - Update user record with uid-based operations
-- Delete user account
 - Protected operations with JWT auth
+
+✅ **Academic Transcript & GPA Service**
+- Globally compatible course codes (2-5 letter subjects, 2-4 digit courses)
+- Flexible semester system (Fall, Winter, Spring, Summer, Quarters)
+- Multiple credit systems support (Credit Hours, ECTS)
+- Dynamic 4.5-scale GPA calculation (excludes P/I/W grades)
+- Term-specific and cumulative GPA tracking
+- `App/Services/transcriptService.js` for grade-to-GPA mapping and calculations
 
 ✅ **Security**
 - CORS enabled
@@ -332,8 +339,8 @@ http://localhost:3000/api
 ### Authentication Endpoints
 
 **POST /auth/signup** - Register new user
-- Required: `displayName`, `email`, `password`
-- Optional: `role` (default: "student")
+- Required: `firstName`, `lastName`, `email`, `password`
+- For students: also required `schoolName`, `programName`
 - Returns: JWT token + user data
 
 **POST /auth/signin** - Login user
@@ -401,15 +408,25 @@ jest.config.js                      # Jest configuration
 
 ### User Model
 - `uid`: Auto-generated unique identifier
-- `displayName`: User's full name (required)
+- `firstName`: User's first name (required)
+- `lastName`: User's last name (required)
 - `email`: Email address (required, unique)
 - `password`: Hashed password (required)
-- `role`: "student", "instructor", or "admin" (default: "student")
+- `role`: "student" or "admin" (default: "student")
+- `schoolName`: School/Institution (required for students)
+- `programName`: Major/Program (required for students, globally flexible)
+- `academicRecords`: Array of academic transcript entries
+  - Subject (2-5 uppercase letters)
+  - Course code (2-4 digits with optional letters)
+  - Grade (A+, A, A-, B+, B, B-, C+, C, C-, D+, D, F, P, I, W, In Progress)
+  - Credits and credit system (Credit Hours or ECTS)
+  - Term and year
 - `enrolledCourses`: Array of course IDs
 - `profilePic`: Avatar URL
 - `bio`: Biography
 - `linkedin`: LinkedIn profile URL
-- `admin`: Boolean flag
+- `github`: GitHub profile URL
+- `personalWebsite`: Portfolio website URL
 - `created`: Creation timestamp (immutable)
 - `updated`: Last update timestamp
 
