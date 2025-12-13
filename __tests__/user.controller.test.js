@@ -90,7 +90,7 @@ describe('User Controller', () => {
           displayName: 'List Test User 2',
           email: 'listtest2' + Date.now() + '@example.com',
           password: 'TestPassword123',
-          role: 'instructor'
+          role: 'admin'
         });
 
       const res = await request(app)

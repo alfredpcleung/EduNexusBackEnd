@@ -23,7 +23,7 @@ const UserSchema = new Schema(
     },
     role: { 
       type: String, 
-      enum: ["student", "instructor", "admin"], 
+      enum: ["student", "admin"], 
       default: "student" 
     },
     enrolledCourses: { type: [String], default: [] },           // Array of course IDs
@@ -31,8 +31,7 @@ const UserSchema = new Schema(
     bio: { type: String },                                      // Short biography
     linkedin: { type: String },                                 // LinkedIn profile
     created: { type: Date, default: Date.now, immutable: true },
-    updated: { type: Date, default: Date.now },
-    admin: { type: Boolean, default: false }
+    updated: { type: Date, default: Date.now }
   },
   { collection: "users" }
 );

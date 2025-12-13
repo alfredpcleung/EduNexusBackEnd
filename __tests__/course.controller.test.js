@@ -45,7 +45,7 @@ describe('Course Controller', () => {
         displayName: 'Test User',
         email: 'coursetest@example.com',
         password: 'TestPassword123',
-        role: 'instructor'
+        role: 'student'
       });
 
     authToken = signupRes.body.data.token;
