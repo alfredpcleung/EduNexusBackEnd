@@ -71,6 +71,9 @@ Query params: `institution`, `courseSubject`
 #### GET /courses/:id
 Get course by ID (public).
 
+#### GET /courses/lookup/:institution/:subject/:number
+Lookup course by compound key (public).
+
 #### POST /courses *(auth required)*
 Create course.
 
@@ -100,10 +103,16 @@ Delete course.
 
 ### Reviews
 
-#### GET /reviews?courseId=:id
-List reviews for a course (public).
+#### GET /reviews
+List reviews with filters (public). Query params: `courseId`, `authorUid`, `term`, `year`
 
-#### GET /reviews/:id
+#### GET /reviews/tags
+Get list of valid review tags (public).
+
+#### GET /reviews/course/:courseId
+Get all reviews for a specific course (public).
+
+#### GET /reviews/:reviewId
 Get review by ID (public).
 
 #### POST /reviews *(auth + transcript eligibility)*

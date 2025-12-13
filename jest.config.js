@@ -5,8 +5,8 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testTimeout: 30000,
   collectCoverageFrom: [
-    'App/**/*.js',
-    '!App/**/*.test.js',
+    'app/**/*.js',
+    '!app/**/*.test.js',
     '!node_modules/**'
   ]
 };
