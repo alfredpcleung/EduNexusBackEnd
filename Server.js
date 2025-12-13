@@ -11,11 +11,9 @@ var courseRotuer = require('./App/Routers/course.js');
 var projectRouter = require('./App/Routers/project.js');
 var feedbackRouter = require('./App/Routers/feedback.js');
 var dashboardRouter = require('./App/Routers/dashboard.js');
-//const firebaseAdmin = require("./Config/firebaseAdmin.js");
 
 var app = Express();
 configDb();
-// firebaseAdmin();
 
 app.use(cors());
 app.use(logger('dev') );
