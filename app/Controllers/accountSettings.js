@@ -10,7 +10,6 @@ const errorResponse = require('../Utils/errorResponse');
 module.exports.updateSettings = async function (req, res, next) {
   try {
     const userId = req.user.uid;
-    console.log('[accountSettings] req.user:', req.user);
     const {
       newEmail,
       confirmNewEmail,
@@ -50,7 +49,6 @@ module.exports.updateSettings = async function (req, res, next) {
 
     // Fetch user
     const user = await User.findOne({ uid: userId }).select('+password +email');
-    console.log('[accountSettings] User.findOne({ uid }):', user);
     if (!user) {
       return errorResponse(res, 404, 'User not found.');
     }

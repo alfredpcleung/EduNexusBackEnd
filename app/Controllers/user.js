@@ -12,7 +12,6 @@ module.exports.create = async function (req, res, next) {
             data: result
         });
     } catch (error) {
-        console.log(error);
         next(error);
     }
 }
@@ -25,7 +24,6 @@ module.exports.list = async function (req, res, next) {
             data: list
         });
     } catch (error) {
-        console.log(error);
         next(error);
     }
 }
@@ -41,7 +39,6 @@ module.exports.LisByID = async function (req, res, next) {
             data: Luser
         });
     } catch (error) {
-        console.log(error);
         next(error);
     }
 }
@@ -61,7 +58,6 @@ module.exports.SetUserByUID = async function (req, res, next) {
         req.user = await UserModel.findOne({ uid: req.params.uid }, '-hashed_password -salt');
         next();
     } catch (error) {
-        console.log(error);
         next(error);
     }
 }
@@ -95,7 +91,6 @@ module.exports.update = async function (req, res, next) {
             data: result
         });
     } catch (error) {
-        console.log(error);
         next(error);
     }
 }
@@ -127,7 +122,6 @@ module.exports.delete = async function (req, res, next) {
             return errorResponse(res, 404, "User not found");
         }
     } catch (error) {
-        console.log(error);
         next(error);
     }
 }
@@ -137,7 +131,6 @@ module.exports.setAdmin = async function (req, res, next) {
     try {
         // Check if the current user is admin. Only admins can set another admin.
         let authorized = await UserModel.findOne({ _id: req.auth.id }, 'admin');
-        console.log("authorized", authorized.admin);
 
         if (!authorized.admin) {
             return errorResponse(res, 403, "You are not authorized to perform this action");
@@ -145,7 +138,6 @@ module.exports.setAdmin = async function (req, res, next) {
         else {
             // Update one single field.
             let result = await UserModel.updateOne({ _id: req.params.userID }, { admin: true });
-            console.log("setAdmin", result);
             if (result.modifiedCount > 0) {
                 res.json({
                     success: true,
@@ -158,14 +150,12 @@ module.exports.setAdmin = async function (req, res, next) {
             }
         }
     } catch (error) {
-        console.log(error);
         next(error)
     }
 
 }
 
 module.exports.hasAuthorization = async function (req, res, next) {
-    console.log("Payload", req.auth);
     let authorized = req.auth && req.user && req.auth.username == req.user.username;
 
     if (!authorized) {

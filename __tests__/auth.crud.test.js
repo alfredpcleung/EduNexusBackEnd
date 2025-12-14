@@ -490,4 +490,86 @@ describe('Authentication & CRUD Tests', () => {
       expect(res.body.data.message).toContain('deleted successfully');
     });
   });
+
+  // ============================================
+  // EDGE CASES
+  // ============================================
+
+  describe('Edge Cases - User Auth & CRUD', () => {
+    test('Should fail to sign up with duplicate email', async () => {
+      // First signup
+      await request(app)
+        .post('/api/auth/signup')
+        .send({
+          firstName: 'Dup',
+          lastName: 'User',
+          email: 'dupuser@example.com',
+          password: 'DupPass123',
+          role: 'student',
+          school: 'Test U',
+          fieldOfStudy: 'CS'
+        })
+        .expect(201);
+      // Second signup with same email
+      const res = await request(app)
+        .post('/api/auth/signup')
+        .send({
+          firstName: 'Dup2',
+          lastName: 'User2',
+          email: 'dupuser@example.com',
+          password: 'DupPass456',
+          role: 'student',
+          school: 'Test U',
+          fieldOfStudy: 'CS'
+        });
+
+      expect(res.status).toBe(409);
+      expect(res.body.success).toBe(false);
+    });
+
+    test('Should fail to update user without token', async () => {
+      const res = await request(app)
+        .put('/api/users/someuid')
+        .send({ firstName: 'NoAuth' });
+      expect(res.status).toBe(401);
+    });
+
+    test('Should fail to delete user without token', async () => {
+      const res = await request(app)
+        .delete('/api/users/someuid');
+      expect(res.status).toBe(401);
+    });
+
+    test('Should fail to sign up with invalid email', async () => {
+      const res = await request(app)
+        .post('/api/auth/signup')
+        .send({
+          firstName: 'Bad',
+          lastName: 'Email',
+          email: 'notanemail',
+          password: 'BadPass123',
+          role: 'student',
+          school: 'Test U',
+          fieldOfStudy: 'CS'
+        });
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    test('Should fail to sign up with short password', async () => {
+      const res = await request(app)
+        .post('/api/auth/signup')
+        .send({
+          firstName: 'Short',
+          lastName: 'Pass',
+          email: 'shortpass@example.com',
+          password: '123',
+          role: 'student',
+          school: 'Test U',
+          fieldOfStudy: 'CS'
+        });
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+  });
 });

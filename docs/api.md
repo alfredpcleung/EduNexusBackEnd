@@ -165,6 +165,54 @@ Update user profile.
 #### DELETE /users/:uid *(auth required)*
 Delete user.
 
+#### PATCH /users/settings *(auth required)*
+Update the authenticated user's email and/or password.
+
+```json
+// Request (any combination of fields)
+{
+  "email": "newemail@example.com",   // optional, must be unique
+  "password": "newStrongPassword123", // optional, must meet password policy
+  "currentPassword": "oldPassword123" // required if changing password or email
+}
+
+// Response 200
+{
+  "success": true,
+  "data": {
+    "user": {
+      "uid": "user_123...",
+      "email": "newemail@example.com"
+      // ...other user fields
+    }
+  }
+}
+
+// Error 400 (validation)
+{
+  "success": false,
+  "message": "Invalid email or password format."
+}
+
+// Error 401 (auth)
+{
+  "success": false,
+  "message": "Invalid or expired token. Please authenticate again."
+}
+
+// Error 403 (wrong password)
+{
+  "success": false,
+  "message": "Current password is incorrect."
+}
+
+// Error 409 (duplicate email)
+{
+  "success": false,
+  "message": "Email is already in use."
+}
+```
+
 ---
 
 ### Projects

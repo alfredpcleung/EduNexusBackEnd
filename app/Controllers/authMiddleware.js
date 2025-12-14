@@ -4,8 +4,6 @@ const errorResponse = require('../Utils/errorResponse');
 
 // Middleware to verify JWT token and fetch user role
 module.exports.requireAuth = async (req, res, next) => {
-    // Debug: log incoming token
-    console.log('[requireAuth] Authorization header:', req.headers.authorization);
     // Get token from Authorization header
     const token = req.headers.authorization?.split(' ')[1];
 
@@ -17,7 +15,6 @@ module.exports.requireAuth = async (req, res, next) => {
     let decoded;
     try {
         decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log('[requireAuth] Decoded JWT:', decoded);
     } catch (err) {
         // JWT errors (expired, invalid, etc.)
         console.error('[requireAuth] JWT verification error:', err);
@@ -27,7 +24,6 @@ module.exports.requireAuth = async (req, res, next) => {
     try {
         // Fetch user from database to get role
         const user = await User.findOne({ uid: decoded.uid }, 'uid role');
-        console.log('[requireAuth] User lookup result:', user);
         if (!user) {
             return errorResponse(res, 401, "User not found. Please authenticate again.");
         }

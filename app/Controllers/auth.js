@@ -83,6 +83,7 @@ module.exports.signup = async function (req, res, next) {
             data: {
                 token,
                 user: {
+                    _id: newUser._id,
                     firstName: newUser.firstName,
                     lastName: newUser.lastName,
                     email: newUser.email,
@@ -144,6 +145,7 @@ module.exports.signin = async function (req, res, next) {
             data: {
                 token,
                 user: {
+                    _id: user._id,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     email: user.email,

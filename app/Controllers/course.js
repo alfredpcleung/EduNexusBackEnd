@@ -39,6 +39,13 @@ module.exports.create = async function (req, res, next) {
       return errorResponse(res, 409, `Course ${normalizedSubject} ${courseNumber} already exists for ${school}`);
     }
 
+
+    // Set createdBy and owner to authenticated user (do not allow override)
+    const userId = req.user && req.user._id;
+    if (!userId) {
+      return errorResponse(res, 401, 'Authenticated user required');
+    }
+
     // Create new course
     const newCourse = await CourseModel.create({
       school,
@@ -49,7 +56,9 @@ module.exports.create = async function (req, res, next) {
       credits: credits || 4,
       syllabusRevisionDate: syllabusRevisionDate || null,
       prerequisites: prerequisites || [],
-      corequisites: corequisites || []
+      corequisites: corequisites || [],
+      createdBy: userId,
+      owner: userId
     });
 
     res.status(201).json({
@@ -75,13 +84,14 @@ module.exports.create = async function (req, res, next) {
  */
 module.exports.list = async function (req, res, next) {
   try {
-    const { school, courseSubject, search, limit = 50, skip = 0 } = req.query;
+    const { school, courseSubject, search, createdBy, owner, limit = 50, skip = 0 } = req.query;
 
     // Build query
     const query = {};
     if (school) query.school = school;
     if (courseSubject) query.courseSubject = courseSubject.toUpperCase();
-    
+    if (createdBy) query.createdBy = createdBy;
+    if (owner) query.owner = owner;
     // Text search on title/description
     if (search) {
       query.$text = { $search: search };

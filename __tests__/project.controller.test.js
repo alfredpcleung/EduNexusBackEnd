@@ -86,11 +86,12 @@ const User = require('../app/Models/user');
 const Project = require('../app/Models/project');
 
 
+
 // Test data
-let token1, token2, user1Uid, user2Uid, projectId1, projectId2;
+let user1, user2, projectId1, projectId2;
+
 
 describe('Project Controller Tests', () => {
-
   // Helper to create a new user and return { token, uid }
   async function createUser(email, password = 'password123') {
     const res = await request(app)
@@ -110,13 +111,13 @@ describe('Project Controller Tests', () => {
     };
   }
 
-  // Use fresh users/tokens for each test
-  let user1, user2;
   beforeEach(async () => {
     user1 = await createUser(`projectuser1+${Date.now()}@test.com`);
     user2 = await createUser(`projectuser2+${Date.now()}@test.com`);
     // Wait to ensure users are fully committed to the DB
     await new Promise(res => setTimeout(res, 100));
+    projectId1 = undefined;
+    projectId2 = undefined;
   });
 
   afterAll(async () => {
@@ -185,7 +186,7 @@ describe('Project Controller Tests', () => {
       expect(res.body.data).toBeDefined();
       expect(res.body.data.projectTitle).toBe('Web Development Portfolio');
       expect(res.body.data.description).toBe('Build a personal portfolio website');
-      expect(res.body.data.owner).toBe(user1Uid);
+      expect(res.body.data.owner).toBe(user1.uid);
       expect(res.body.data.tags).toEqual(['JavaScript', 'Frontend', 'Portfolio-worthy']);
       expect(res.body.data.status).toBe('active');
       expect(res.body.data._id).toBeDefined();
@@ -592,8 +593,8 @@ describe('Project Controller Tests', () => {
           description: 'Unauthorized',
           courseSubject: 'CS',
           courseNumber: '101',
-          members: [user1Uid, user2Uid],
-          createdBy: user1Uid,
+          members: [user1.uid, user2.uid],
+          createdBy: user1.uid,
           tags: ['JavaScript'],
           status: 'active'
         });
@@ -605,7 +606,7 @@ describe('Project Controller Tests', () => {
     test('should return 404 for non-existent project', async () => {
       const res = await request(app)
         .put('/api/projects/507f1f77bcf86cd799439011')
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Authorization', `Bearer ${user1.token}`)
         .send({
           title: 'Updated'
         });
@@ -617,7 +618,7 @@ describe('Project Controller Tests', () => {
     test('should allow only valid status values', async () => {
       const res = await request(app)
         .put(`/api/projects/${projectId1}`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Authorization', `Bearer ${user1.token}`)
         .send({
           status: 'draft'
         });
@@ -629,14 +630,14 @@ describe('Project Controller Tests', () => {
     test('should not allow owner field to be updated', async () => {
       const res = await request(app)
         .put(`/api/projects/${projectId1}`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Authorization', `Bearer ${user1.token}`)
         .send({
-          owner: user2Uid
+          owner: user2.uid
         });
 
       // Owner should remain unchanged
       expect(res.status).toBe(200);
-      expect(res.body.data.owner).toBe(user1Uid);
+      expect(res.body.data.owner).toBe(user1.uid);
     });
   });
 
@@ -653,8 +654,8 @@ describe('Project Controller Tests', () => {
           description: 'Will be deleted',
           courseSubject: 'CS',
           courseNumber: '111',
-          members: [user1Uid, user2Uid],
-          createdBy: user1Uid,
+          members: [user1.uid, user2.uid],
+          createdBy: user1.uid,
           tags: ['JavaScript'],
           status: 'active'
         });
@@ -664,14 +665,14 @@ describe('Project Controller Tests', () => {
       // Verify it exists
       const res = await request(app)
         .put(`/api/projects/${projectId1}`)
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Authorization', `Bearer ${user1.token}`)
         .send({
           projectTitle: 'Updated Portfolio Project',
           description: 'Updated description',
           courseSubject: 'CS',
           courseNumber: '101',
-          members: [user1Uid, user2Uid],
-          createdBy: user1Uid,
+          members: [user1.uid, user2.uid],
+          createdBy: user1.uid,
           tags: ['JavaScript', 'Frontend', 'Portfolio-worthy'],
           status: 'archived'
         });
@@ -733,8 +734,8 @@ describe('Project Controller Tests', () => {
           description: 'Test trimming',
           courseSubject: 'CS',
           courseNumber: '108',
-          members: [user1Uid, user2Uid],
-          createdBy: user1Uid
+          members: [user1.uid, user2.uid],
+          createdBy: user1.uid
         });
 
       expect(res.status).toBe(201);
@@ -744,14 +745,14 @@ describe('Project Controller Tests', () => {
     test('should accept empty description', async () => {
       const res = await request(app)
         .post('/api/projects')
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Authorization', `Bearer ${user1.token}`)
         .send({
           projectTitle: 'No Description Project',
           description: '',
           courseSubject: 'CS',
           courseNumber: '109',
-          members: [user1Uid, user2Uid],
-          createdBy: user1Uid
+          members: [user1.uid, user2.uid],
+          createdBy: user1.uid
         });
 
       expect(res.status).toBe(201);
@@ -761,14 +762,14 @@ describe('Project Controller Tests', () => {
     test('should accept special characters in title', async () => {
       const res = await request(app)
         .post('/api/projects')
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Authorization', `Bearer ${user1.token}`)
         .send({
           projectTitle: 'Project #2: Build "Amazing" App (v1.0)',
           description: 'Special chars test',
           courseSubject: 'CS',
           courseNumber: '110',
-          members: [user1Uid, user2Uid],
-          createdBy: user1Uid
+          members: [user1.uid, user2.uid],
+          createdBy: user1.uid
         });
 
       expect(res.status).toBe(201);
@@ -792,21 +793,21 @@ describe('Project Controller Tests', () => {
           description: 'Will be deleted',
           courseSubject: 'CS',
           courseNumber: '111',
-          members: [user1Uid, user2Uid],
-          createdBy: user1Uid,
+          members: [user1.uid, user2.uid],
+          createdBy: user1.uid,
           tags: ['JavaScript'],
           status: 'active'
         });
       const res = await request(app)
         .post('/api/projects')
-        .set('Authorization', `Bearer ${token1}`)
+        .set('Authorization', `Bearer ${user1.token}`)
         .send({
           projectTitle: 'Tags Array Project',
           description: 'Project with tags array',
           courseSubject: 'CS',
           courseNumber: '105',
-          members: [user1Uid, user2Uid],
-          createdBy: user1Uid,
+          members: [user1.uid, user2.uid],
+          createdBy: user1.uid,
           tags: ['Machine Learning', 'Backend', 'Highly collaborative']
         });
 

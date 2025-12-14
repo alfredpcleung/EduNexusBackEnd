@@ -87,6 +87,39 @@ describe.skip('Course Controller - New Schema', () => {
       expect(res.body.data.courseNumber).toBe('246');
       expect(res.body.data.title).toBe('Web Development');
       expect(res.body.data.courseCode).toBe('COMP 246');
+      // createdBy should be set to the authenticated user
+      expect(res.body.data.createdBy).toBeDefined();
+      const user = await UserModel.findOne({ uid: testUid });
+      expect(res.body.data.createdBy).toEqual(user._id.toString());
+      // owner should also be set to the authenticated user
+      expect(res.body.data.owner).toBeDefined();
+      expect(res.body.data.owner).toEqual(user._id.toString());
+    });
+
+    it('should not allow client to override createdBy', async () => {
+      const fakeUserId = new mongoose.Types.ObjectId();
+      const res = await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ ...validCourse, createdBy: fakeUserId })
+        .expect(201);
+      // createdBy should still be set to the authenticated user, not the fakeUserId
+      const user = await UserModel.findOne({ uid: testUid });
+      expect(res.body.data.createdBy).toEqual(user._id.toString());
+      // owner should also be set to the authenticated user
+      expect(res.body.data.owner).toEqual(user._id.toString());
+    });
+
+    it('should not allow client to override owner', async () => {
+      const fakeUserId = new mongoose.Types.ObjectId();
+      const res = await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ ...validCourse, owner: fakeUserId })
+        .expect(201);
+      // owner should still be set to the authenticated user, not the fakeUserId
+      const user = await UserModel.findOne({ uid: testUid });
+      expect(res.body.data.owner).toEqual(user._id.toString());
     });
 
     it('should normalize courseSubject to uppercase', async () => {
@@ -258,6 +291,43 @@ describe.skip('Course Controller - New Schema', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.length).toBe(4);
       expect(res.body.pagination).toBeDefined();
+    });
+
+    it('should filter by createdBy', async () => {
+      // Create a course as the test user
+      const user = await UserModel.findOne({ uid: testUid });
+      await CourseModel.create({
+        school: 'Centennial College',
+        courseSubject: 'COMP',
+        courseNumber: '999',
+        title: 'Created By Test User',
+        createdBy: user._id
+        , owner: user._id
+      });
+      const res = await request(app)
+        .get(`/api/courses?createdBy=${user._id}`)
+        .expect(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.length).toBeGreaterThanOrEqual(1);
+      expect(res.body.data.every(c => c.createdBy === user._id.toString())).toBe(true);
+    });
+
+    it('should filter by owner', async () => {
+      const user = await UserModel.findOne({ uid: testUid });
+      await CourseModel.create({
+        school: 'Centennial College',
+        courseSubject: 'COMP',
+        courseNumber: '888',
+        title: 'Owned By Test User',
+        createdBy: user._id,
+        owner: user._id
+      });
+      const res = await request(app)
+        .get(`/api/courses?owner=${user._id}`)
+        .expect(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.length).toBeGreaterThanOrEqual(1);
+      expect(res.body.data.every(c => c.owner === user._id.toString())).toBe(true);
     });
 
     it('should filter by school', async () => {

@@ -68,14 +68,28 @@ const CourseSchema = new Schema(
     },
 
     // Relationships
-    prerequisites: {
-      type: [CourseRefSchema],
-      default: []
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
     },
-    corequisites: {
-      type: [CourseRefSchema],
-      default: []
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
     },
+    prerequisites: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Course'
+      }
+    ],
+    corequisites: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Course'
+      }
+    ],
 
     // Aggregated Review Metrics (null if < 3 reviews)
     avgDifficulty: { type: Number, default: null, min: 1, max: 5 },
@@ -92,14 +106,7 @@ const CourseSchema = new Schema(
   },
   { collection: 'courses' }
 );
-
-// Compound unique index: one course per school + subject + number
-CourseSchema.index(
-  { school: 1, courseSubject: 1, courseNumber: 1 },
-  { unique: true }
-);
-
-// Text index for search
+        // ...existing code...
 CourseSchema.index({ title: 'text', description: 'text' });
 
 // Update timestamp on save
