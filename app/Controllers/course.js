@@ -9,11 +9,11 @@ const errorResponse = require('../Utils/errorResponse');
  */
 module.exports.create = async function (req, res, next) {
   try {
-    const { institution, courseSubject, courseNumber, title, description, credits, syllabusRevisionDate, prerequisites, corequisites } = req.body;
+    const { school, courseSubject, courseNumber, title, description, credits, syllabusRevisionDate, prerequisites, corequisites } = req.body;
 
     // Validate required fields
-    if (!institution || !institution.trim()) {
-      return errorResponse(res, 400, 'Institution is required');
+    if (!school || !school.trim()) {
+      return errorResponse(res, 400, 'School is required');
     }
     if (!courseSubject || !courseSubject.trim()) {
       return errorResponse(res, 400, 'Course subject is required');
@@ -30,18 +30,18 @@ module.exports.create = async function (req, res, next) {
 
     // Check if course already exists
     const existingCourse = await CourseModel.findOne({
-      institution,
+      school,
       courseSubject: normalizedSubject,
       courseNumber
     });
 
     if (existingCourse) {
-      return errorResponse(res, 409, `Course ${normalizedSubject} ${courseNumber} already exists for ${institution}`);
+      return errorResponse(res, 409, `Course ${normalizedSubject} ${courseNumber} already exists for ${school}`);
     }
 
     // Create new course
     const newCourse = await CourseModel.create({
-      institution,
+      school,
       courseSubject: normalizedSubject,
       courseNumber,
       title,
@@ -71,15 +71,15 @@ module.exports.create = async function (req, res, next) {
 /**
  * GET /api/courses
  * List all courses with optional filters
- * Query params: institution, courseSubject, search, filterBySyllabus
+ * Query params: school, courseSubject, search, filterBySyllabus
  */
 module.exports.list = async function (req, res, next) {
   try {
-    const { institution, courseSubject, search, limit = 50, skip = 0 } = req.query;
+    const { school, courseSubject, search, limit = 50, skip = 0 } = req.query;
 
     // Build query
     const query = {};
-    if (institution) query.institution = institution;
+    if (school) query.school = school;
     if (courseSubject) query.courseSubject = courseSubject.toUpperCase();
     
     // Text search on title/description
@@ -88,7 +88,7 @@ module.exports.list = async function (req, res, next) {
     }
 
     const courses = await CourseModel.find(query)
-      .sort({ institution: 1, courseSubject: 1, courseNumber: 1 })
+      .sort({ school: 1, courseSubject: 1, courseNumber: 1 })
       .limit(parseInt(limit))
       .skip(parseInt(skip));
 
@@ -134,15 +134,15 @@ module.exports.getById = async function (req, res, next) {
 };
 
 /**
- * GET /api/courses/lookup/:institution/:subject/:number
- * Lookup course by institution + subject + number
+ * GET /api/courses/lookup/:school/:subject/:number
+ * Lookup course by school + subject + number
  */
 module.exports.lookup = async function (req, res, next) {
   try {
-    const { institution, subject, number } = req.params;
+    const { school, subject, number } = req.params;
 
     const course = await CourseModel.findOne({
-      institution,
+      school,
       courseSubject: subject.toUpperCase(),
       courseNumber: number
     });
@@ -235,14 +235,14 @@ module.exports.delete = async function (req, res, next) {
  */
 module.exports.findOrCreate = async function (req, res, next) {
   try {
-    const { institution, courseSubject, courseNumber, title } = req.body;
+    const { school, courseSubject, courseNumber, title } = req.body;
 
-    if (!institution || !courseSubject || !courseNumber) {
-      return errorResponse(res, 400, 'institution, courseSubject, and courseNumber are required');
+    if (!school || !courseSubject || !courseNumber) {
+      return errorResponse(res, 400, 'school, courseSubject, and courseNumber are required');
     }
 
     const course = await findOrCreateCourse(
-      institution,
+      school,
       courseSubject.toUpperCase(),
       courseNumber,
       title

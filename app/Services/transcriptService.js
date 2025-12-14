@@ -132,13 +132,13 @@ function calculateGPA(transcriptEntries, scheme = DEFAULT_SCHEME) {
 }
 
 /**
- * Calculate cumulative weighted GPA from academic records (detailed version)
+ * Calculate cumulative weighted GPA from courses (detailed version)
  * 
  * Formula: Σ(grade points × credit hours) / Σ(credit hours)
  * Only grades with GPA values are included in calculation.
  * Pass (P), Incomplete (I), Withdrawn (W), and In Progress are excluded.
  * 
- * @param {Array} academicRecords - Array of academic record objects
+ * @param {Array} courses - Array of course objects
  * @param {string} [scheme='centennial'] - GPA scheme to use
  * @returns {Object} Object containing cumulative GPA and calculation details
  *   - gpa: {number|null} Cumulative GPA (rounded to 3 decimal places), null if no valid grades
@@ -150,11 +150,11 @@ function calculateGPA(transcriptEntries, scheme = DEFAULT_SCHEME) {
  *   - recordsExcluded: {number} Number of records excluded from calculation
  *   - gradeBreakdown: {Object} Count of each grade received
  */
-function calculateCumulativeGPA(academicRecords = [], scheme = DEFAULT_SCHEME) {
+function calculateCumulativeGPA(courses = [], scheme = DEFAULT_SCHEME) {
   const schemeConfig = GPA_SCHEMES[scheme] || GPA_SCHEMES[DEFAULT_SCHEME];
   const gradeMapping = schemeConfig.grades;
 
-  if (!Array.isArray(academicRecords) || academicRecords.length === 0) {
+  if (!Array.isArray(courses) || courses.length === 0) {
     return {
       gpa: null,
       scheme: schemeConfig.name,
@@ -174,7 +174,7 @@ function calculateCumulativeGPA(academicRecords = [], scheme = DEFAULT_SCHEME) {
   let recordsExcluded = 0;
   const gradeBreakdown = {};
 
-  academicRecords.forEach((record) => {
+  courses.forEach((record) => {
     const grade = record.grade;
     const creditHours = record.creditHours || 0;
 
@@ -220,17 +220,17 @@ function calculateCumulativeGPA(academicRecords = [], scheme = DEFAULT_SCHEME) {
 /**
  * Calculate term GPA from records matching a specific term and year
  * 
- * @param {Array} academicRecords - Array of academic record objects
+ * @param {Array} courses - Array of course objects
  * @param {string} term - Semester term (e.g., "Fall", "Winter", "Spring", "Summer")
  * @param {number} year - Academic year (e.g., 2025)
  * @param {string} [scheme='centennial'] - GPA scheme to use
  * @returns {Object} Object containing term GPA and calculation details
  */
-function calculateTermGPA(academicRecords = [], term, year, scheme = DEFAULT_SCHEME) {
+function calculateTermGPA(courses = [], term, year, scheme = DEFAULT_SCHEME) {
   const schemeConfig = GPA_SCHEMES[scheme] || GPA_SCHEMES[DEFAULT_SCHEME];
   const gradeMapping = schemeConfig.grades;
 
-  const termRecords = academicRecords.filter(
+  const termRecords = courses.filter(
     (record) => record.term === term && record.year === year
   );
 
@@ -295,14 +295,14 @@ function calculateTermGPA(academicRecords = [], term, year, scheme = DEFAULT_SCH
  * Get GPA grade breakdown by term and year
  * Useful for performance analytics
  * 
- * @param {Array} academicRecords - Array of academic record objects
+ * @param {Array} courses - Array of course objects
  * @param {string} [scheme='centennial'] - GPA scheme to use
  * @returns {Object} Object keyed by "term-year" with GPA info for each
  */
-function getGPAByTerm(academicRecords = [], scheme = DEFAULT_SCHEME) {
+function getGPAByTerm(courses = [], scheme = DEFAULT_SCHEME) {
   const termMap = {};
 
-  academicRecords.forEach((record) => {
+  courses.forEach((record) => {
     const key = `${record.term}-${record.year}`;
     if (!termMap[key]) {
       termMap[key] = [];
@@ -313,7 +313,7 @@ function getGPAByTerm(academicRecords = [], scheme = DEFAULT_SCHEME) {
   const results = {};
   Object.entries(termMap).forEach(([key, records]) => {
     const [term, year] = key.split('-');
-    results[key] = calculateTermGPA(academicRecords, term, parseInt(year), scheme);
+    results[key] = calculateTermGPA(courses, term, parseInt(year), scheme);
   });
 
   return results;

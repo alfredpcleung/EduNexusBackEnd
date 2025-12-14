@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const { REVIEW_TAGS } = require('../Constants/reviewTags');
+const { COURSE_TAGS } = require('../Constants/reviewTags');
 
 /**
- * Review Schema
+ * Course Review Schema
  * Student reviews for courses, linked to transcript entries
  * Aggregated metrics stored in CourseSchema
  */
-const ReviewSchema = new Schema(
+const CourseReviewSchema = new Schema(
   {
     // Identifiers
     courseId: {
@@ -67,9 +67,9 @@ const ReviewSchema = new Schema(
       default: [],
       validate: {
         validator: function (tags) {
-          return tags.every(tag => REVIEW_TAGS.includes(tag));
+          return tags.length <= 5 && tags.every(tag => COURSE_TAGS.includes(tag));
         },
-        message: 'Invalid tag. Must be from controlled vocabulary.'
+        message: 'Invalid tags. You can select up to 5 tags from the predefined course tags.'
       }
     },
     comment: {
@@ -93,25 +93,25 @@ const ReviewSchema = new Schema(
     createdAt: { type: Date, default: Date.now, immutable: true },
     updatedAt: { type: Date, default: Date.now }
   },
-  { collection: 'reviews' }
+  { collection: 'courseReviews' }
 );
 
 // Compound unique index: one review per author per course per term/year
-ReviewSchema.index(
+CourseReviewSchema.index(
   { courseId: 1, authorUid: 1, term: 1, year: 1 },
   { unique: true }
 );
 
 // Index for filtering by course and status
-ReviewSchema.index({ courseId: 1, status: 1 });
+CourseReviewSchema.index({ courseId: 1, status: 1 });
 
 // Update timestamp on save
-ReviewSchema.pre('save', function (next) {
+CourseReviewSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });
 
-ReviewSchema.set('toJSON', {
+CourseReviewSchema.set('toJSON', {
   versionKey: false,
   transform: function (doc, ret) {
     delete ret._id;
@@ -123,4 +123,4 @@ ReviewSchema.set('toJSON', {
   }
 });
 
-module.exports = mongoose.model('Review', ReviewSchema);
+module.exports = mongoose.model('CourseReview', CourseReviewSchema);

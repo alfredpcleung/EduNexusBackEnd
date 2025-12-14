@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTNkZGFhNjFlZjJkNTM2ZDFkOTRhNTUiLCJ1aWQiOiJ1c2VyXzE3NjU2NjEzNTA3ODRfczZyNWMxM2Z0IiwiZW1haWwiOiJwcm9qZWN0b3duZXIxQHRlc3QuY29tIiwiaWF0IjoxNzY1NjYxMzUwLCJleHAiOjE3NjYyNjYxNTB9.8jgp6wLfDZfXdAGFuGIga-WRrheGLQlQ0aSzb6RWPyY",
+    "user": {
+      "firstName": "Project",
+      "lastName": "Owner1",
+      "email": "projectowner1@test.com",
+      "role": "student",
+      "uid": "user_1765661350784_s6r5c13ft"
+    }
+  }
+}

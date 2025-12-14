@@ -4,36 +4,24 @@ const bcrypt = require('bcrypt');
 const AuditLog = require('./auditLog');
 
 // Academic Record Schema for student transcript (globally compatible)
-const AcademicRecordSchema = new Schema(
+const TranscriptSchema = new Schema(
   {
-    subject: {
-      type: String,
-      match: [/^[A-Z]{2,5}$/, "Subject code must be 2-5 uppercase letters"],
+    course: {
+      type: Schema.Types.ObjectId,
+      ref: 'Course',
       required: true
     },
-    courseCode: {
-      type: String,
-      match: [/^[A-Z]*\d{2,4}[A-Z]*$/, "Course code must contain 2-4 digits with optional letter prefix/suffix"],
-      required: true
-    },
-    courseTitle: { type: String },                            // optional course name
     grade: {
       type: String,
       enum: ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F", "P", "I", "W", "In Progress"],
       required: true
-    },
-    creditHours: { type: Number, required: true },            // integer credits
-    creditSystem: {
-      type: String,
-      enum: ["Credit Hours", "ECTS"],
-      default: "Credit Hours"
     },
     term: {
       type: String,
       enum: ["Fall", "Winter", "Spring", "Summer", "Quarter1", "Quarter2", "Quarter3", "Quarter4"],
       required: true
     },
-    year: { type: Number, required: true }                    // e.g., 2025
+    year: { type: Number, required: true }
   },
   { _id: false }
 );
@@ -63,8 +51,8 @@ const UserSchema = new Schema(
     },
     firstName: { type: String, required: true, maxlength: 50 },               // First name
     lastName: { type: String, required: true, maxlength: 50 },                // Last name
-    schoolName: { type: String, required: function() { return this.role === 'student'; }, maxlength: 50 }, // School/Institution
-    programName: { type: String, required: function() { return this.role === 'student'; }, maxlength: 50 }, // Major/Field of Study
+    school: { type: String, required: function() { return this.role === 'student'; }, maxlength: 50 }, // School/Institution
+    fieldOfStudy: { type: String, required: function() { return this.role === 'student'; }, maxlength: 50 }, // Major/Field of Study
     github: { 
       type: String, 
       match: [/^https:\/\/github\.com\/[a-zA-Z0-9_-]+$/, "GitHub URL must match the pattern https://github.com/username"] 
@@ -79,8 +67,7 @@ const UserSchema = new Schema(
     },
     bio: { type: String, maxlength: 500 },                                     // Short biography
     profilePic: { type: String },                                              // URL to avatar
-    enrolledCourses: { type: [String], default: [] },                          // Array of course IDs
-    academicRecords: { type: [AcademicRecordSchema], default: [] },            // Student academic transcript
+    courses: { type: [TranscriptSchema], default: [] },                  // All courses (in-progress and completed)
     lastLogin: { type: Date, default: null },                                  // Last successful login timestamp
     created: { type: Date, default: Date.now, immutable: true },
     updated: { type: Date, default: Date.now }
@@ -91,18 +78,42 @@ const UserSchema = new Schema(
 // Index for active students query (lastLogin within 90 days)
 UserSchema.index({ role: 1, lastLogin: -1 });
 
-// Validate role-specific required fields and handle email domain enforcement
+// Modularized validation logic for student-specific fields
+async function validateStudentFields(user) {
+  if (user.role === 'student') {
+    if (!user.school || !user.school.trim()) {
+      throw new Error('School is required for student users');
+    }
+    if (!user.fieldOfStudy || !user.fieldOfStudy.trim()) {
+      throw new Error('Field of study is required for student users');
+    }
+  }
+}
+
+// Modularized audit logging logic
+async function logAuditChanges(user) {
+  const modifiedFields = user.modifiedPaths();
+  const changes = {};
+
+  modifiedFields.forEach(field => {
+    changes[field] = {
+      old: user.get(field, null, { getters: false }),
+      new: user[field]
+    };
+  });
+
+  await AuditLog.create({
+    userId: user._id,
+    changes,
+    action: 'profile_update',
+    timestamp: new Date()
+  });
+}
+
 UserSchema.pre('save', async function (next) {
   try {
-    // For student users, schoolName and programName are required
-    if (this.role === 'student') {
-      if (!this.schoolName || !this.schoolName.trim()) {
-        throw new Error('School Name is required for student users');
-      }
-      if (!this.programName || !this.programName.trim()) {
-        throw new Error('Program Name is required for student users');
-      }
-    }
+    // Validate student-specific fields
+    await validateStudentFields(this);
 
     // Optional: Enforce institution domain if environment variable is set
     if (process.env.ENFORCE_INSTITUTION_DOMAIN) {
@@ -113,12 +124,11 @@ UserSchema.pre('save', async function (next) {
     }
 
     // Hash password if modified
-    if (!this.isModified('password')) {
-      return next();
+    if (this.isModified('password')) {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
     }
 
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error) {
     next(error);
@@ -129,22 +139,8 @@ UserSchema.pre('save', async function (next) {
   try {
     if (!this.isModified()) return next();
 
-    const modifiedFields = this.modifiedPaths();
-    const changes = {};
-
-    modifiedFields.forEach(field => {
-      changes[field] = {
-        old: this.get(field, null, { getters: false }),
-        new: this[field]
-      };
-    });
-
-    await AuditLog.create({
-      userId: this._id,
-      changes,
-      action: 'profile_update',
-      timestamp: new Date()
-    });
+    // Log audit changes
+    await logAuditChanges(this);
 
     next();
   } catch (error) {
@@ -158,14 +154,14 @@ UserSchema.methods.comparePassword = async function (candidatePassword) {
 };
 
 /**
- * Calculate GPA from user's academic records
+ * Calculate GPA from user's courses
  * Delegates to transcriptService for calculation logic
  * @param {string} [scheme='centennial'] - GPA scheme ('centennial', 'us', 'ects')
  * @returns {number|null} GPA rounded to 3 decimal places, or null if no valid grades
  */
 UserSchema.methods.calculateGPA = function (scheme = 'centennial') {
   const transcriptService = require('../Services/transcriptService');
-  return transcriptService.calculateGPA(this.academicRecords, scheme);
+  return transcriptService.calculateGPA(this.courses, scheme);
 };
 
 UserSchema.set('toJSON', {

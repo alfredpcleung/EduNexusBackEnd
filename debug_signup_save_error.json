@@ -1,0 +1,4 @@
+{
+  "error": "User validation failed: email: Please fill a valid e-mail address",
+  "stack": "ValidationError: User validation failed: email: Please fill a valid e-mail address\n    at Document.invalidate (C:\\Users\\alfre\\EduNexusBackEnd\\node_modules\\mongoose\\lib\\document.js:3362:32)\n    at C:\\Users\\alfre\\EduNexusBackEnd\\node_modules\\mongoose\\lib\\document.js:3123:17\n    at C:\\Users\\alfre\\EduNexusBackEnd\\node_modules\\mongoose\\lib\\schemaType.js:1420:9\n    at process.processTicksAndRejections (node:internal/process/task_queues:84:11)"
+}

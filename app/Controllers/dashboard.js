@@ -21,14 +21,14 @@ exports.getDashboard = async (req, res) => {
 
     // Get courses from user's academic records (transcript)
     const transcriptCourses = [];
-    if (user.academicRecords && user.academicRecords.length > 0) {
-      for (const record of user.academicRecords) {
+    if (user.courses && user.courses.length > 0) {
+      for (const record of user.courses) {
         // Find matching course in catalog
         const course = await Course.findOne({
-          institution: user.schoolName,
+          school: user.school,
           courseSubject: record.subject,
           courseNumber: record.courseCode
-        }).select('_id institution courseSubject courseNumber title description credits');
+        }).select('_id school courseSubject courseNumber title description credits');
         
         if (course) {
           transcriptCourses.push({
@@ -43,7 +43,7 @@ exports.getDashboard = async (req, res) => {
 
     // Fetch reviews authored by user
     const userReviews = await Review.find({ authorUid: userUid, status: 'active' })
-      .populate('courseId', 'institution courseSubject courseNumber title')
+      .populate('courseId', 'school courseSubject courseNumber title')
       .select('courseId term year difficulty usefulness workload gradingFairness tags comment created');
 
     // Fetch projects owned by user
@@ -61,15 +61,15 @@ exports.getDashboard = async (req, res) => {
           lastName: user.lastName,
           email: user.email,
           role: user.role,
-          schoolName: user.schoolName,
-          programName: user.programName,
+          school: user.school,
+          fieldOfStudy: user.fieldOfStudy,
           profilePic: user.profilePic,
           bio: user.bio,
           linkedin: user.linkedin,
           created: user.created,
           updated: user.updated
         },
-        enrolledCourses: {
+        courses: {
           count: transcriptCourses.length,
           courses: transcriptCourses
         },

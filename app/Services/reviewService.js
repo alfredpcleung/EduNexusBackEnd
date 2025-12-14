@@ -32,17 +32,17 @@ async function validateReviewEligibility(userUid, courseId, term, year) {
       return { valid: false, error: 'User not found' };
     }
 
-    // Check user's school matches course institution
-    if (user.schoolName !== course.institution) {
+    // Check user's school matches course school
+    if (user.school !== course.school) {
       return { 
         valid: false, 
-        error: 'You can only review courses from your institution' 
+        error: 'You can only review courses from your school' 
       };
     }
 
     // Find matching transcript entry
-    const transcriptEntry = user.academicRecords.find(record =>
-      record.subject === course.courseSubject &&
+    const transcriptEntry = user.courses.find(record =>
+      record.courseSubject === course.courseSubject &&
       record.courseCode === course.courseNumber &&
       record.term === term &&
       record.year === year
@@ -169,22 +169,22 @@ async function recalculateCourseAggregates(courseId, syllabusRevisionDate = null
  * Find or create a course based on transcript entry
  * Used for auto-catalog expansion when student adds transcript
  * 
- * @param {string} institution - Institution name (from user.schoolName)
+ * @param {string} school - School name (from user.school)
  * @param {string} subject - Course subject code
  * @param {string} number - Course number
  * @param {string} title - Optional course title
  * @returns {Object} Course document
  */
-async function findOrCreateCourse(institution, subject, number, title = null) {
+async function findOrCreateCourse(school, subject, number, title = null) {
   let course = await Course.findOne({
-    institution,
+    school,
     courseSubject: subject,
     courseNumber: number
   });
 
   if (!course) {
     course = await Course.create({
-      institution,
+      school,
       courseSubject: subject,
       courseNumber: number,
       title: title || `${subject} ${number}`,

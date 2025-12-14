@@ -1,16 +1,26 @@
 const { generateToken } = require('../Utils/tokenManager');
 const UserModel = require('../Models/user');
 const errorResponse = require('../Utils/errorResponse');
+const { validationResult } = require('express-validator');
 
 /**
  * POST /api/auth/signup
  * Register a new user and return JWT token
  * Required: firstName, lastName, email, password
- * For students: schoolName, programName also required
+ * For students: school and fieldOfStudy also required
  */
+const fs = require('fs');
 module.exports.signup = async function (req, res, next) {
     try {
-        const { uid, firstName, lastName, email, password, role, schoolName, programName, github, personalWebsite, linkedin, bio, profilePic } = req.body;
+        // Handle validation errors from express-validator
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return errorResponse(res, 400, errors.array().map(e => e.msg).join(', '));
+        }
+        // Support both legacy and new field names for school and fieldOfStudy
+        req.body.school = req.body.school || req.body.schoolName;
+        req.body.fieldOfStudy = req.body.fieldOfStudy || req.body.programName;
+        const { uid, firstName, lastName, email, password, role, school, fieldOfStudy, github, personalWebsite, linkedin, bio, profilePic } = req.body;
 
         // Validate required fields
         if (!firstName || !lastName || !email || !password) {
@@ -29,30 +39,37 @@ module.exports.signup = async function (req, res, next) {
 
         // Validate role-specific required fields
         if (userRole === 'student') {
-            if (!schoolName || !programName) {
-                return errorResponse(res, 400, "School Name and Program Name are required for student users");
+            if (!school || !fieldOfStudy) {
+                return errorResponse(res, 400, "School and field of study are required for student users");
             }
         }
 
-        // Create new user (uid will be auto-generated if not provided)
-        const newUser = new UserModel({
+        // Debug: log user creation attempt
+        const userPayload = {
             uid: uid || undefined,
             firstName,
             lastName,
             email,
             password,
             role: userRole,
-            schoolName: userRole === 'student' ? schoolName : undefined,
-            programName: userRole === 'student' ? programName : undefined,
+            school,
+            fieldOfStudy,
             github,
             personalWebsite,
             linkedin,
             bio,
             profilePic
-        });
+        };
+        //
+        // Create new user (uid will be auto-generated if not provided)
+        const newUser = new UserModel(userPayload);
 
         // Save user (password will be hashed automatically)
-        await newUser.save();
+        try {
+            await newUser.save();
+        } catch (err) {
+            throw err;
+        }
 
         // Generate JWT token
         const token = generateToken({ 
@@ -87,6 +104,11 @@ module.exports.signup = async function (req, res, next) {
  */
 module.exports.signin = async function (req, res, next) {
     try {
+        // Handle validation errors from express-validator
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return errorResponse(res, 400, errors.array().map(e => e.msg).join(', '));
+        }
         const { email, password } = req.body;
 
         // Validate required fields

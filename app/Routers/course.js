@@ -6,7 +6,7 @@ const AuthMiddleware = require('../Controllers/authMiddleware');
 // Public routes
 Router.get('/', CourseController.list);
 Router.get('/:id', CourseController.getById);
-Router.get('/lookup/:institution/:subject/:number', CourseController.lookup);
+Router.get('/lookup/:school/:subject/:number', CourseController.lookup);
 
 // Authenticated routes
 Router.post('/', AuthMiddleware.requireAuth, CourseController.create);

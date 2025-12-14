@@ -3,7 +3,8 @@
  * Used by Review schema for validation
  */
 
-const REVIEW_TAGS = [
+// Tags for courses
+const COURSE_TAGS = [
   'Heavy workload',
   'Exam-heavy',
   'Project-based',
@@ -18,7 +19,27 @@ const REVIEW_TAGS = [
   'Fast-paced',
   'Math-intensive',
   'Writing-intensive',
-  'Lots of reading'
+  'Lots of reading',
+  'Interactive',
+  'Requires prior knowledge'
+];
+
+// Tags for projects
+const PROJECT_TAGS = [
+  'JavaScript',
+  'Machine Learning',
+  'Casual',
+  'Serious',
+  'Teamwork essential',
+  'Frontend',
+  'Backend',
+  'Full-stack',
+  'AI-focused',
+  'Blockchain',
+  'Mobile development',
+  'Game development',
+  'Portfolio-worthy',
+  'Highly collaborative'
 ];
 
 // Grades that allow review (completed or withdrawn)
@@ -39,7 +60,8 @@ const NON_REVIEWABLE_GRADES = ['I', 'In Progress'];
 const MIN_REVIEWS_FOR_AGGREGATES = 3;
 
 module.exports = {
-  REVIEW_TAGS,
+  COURSE_TAGS,
+  PROJECT_TAGS,
   REVIEWABLE_GRADES,
   NON_REVIEWABLE_GRADES,
   MIN_REVIEWS_FOR_AGGREGATES

@@ -4,6 +4,14 @@ const ReviewController = require('../Controllers/review');
 const AuthMiddleware = require('../Controllers/authMiddleware');
 const { validateReviewCreation, isReviewAuthorOrAdmin } = require('../Middleware/reviewAuth');
 
+// Defensive check: throw clear error if middleware is not a function
+if (typeof validateReviewCreation !== 'function') {
+  throw new Error('validateReviewCreation middleware is not a function. Check app/Middleware/reviewAuth.js export.');
+}
+if (typeof isReviewAuthorOrAdmin !== 'function') {
+  throw new Error('isReviewAuthorOrAdmin middleware is not a function. Check app/Middleware/reviewAuth.js export.');
+}
+
 // Public routes
 Router.get('/', ReviewController.list);
 Router.get('/tags', ReviewController.getTags);

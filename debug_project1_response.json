@@ -1,0 +1,26 @@
+{
+  "success": true,
+  "data": {
+    "projectTitle": "Web Development Portfolio",
+    "description": "Build a personal portfolio website",
+    "owner": "user_1765670539429_0wjm6mn89",
+    "courseSubject": "CS",
+    "courseNumber": "101",
+    "members": [
+      "user_1765670539429_0wjm6mn89",
+      "user_1765670539550_lm7hb2c9l"
+    ],
+    "tags": [
+      "JavaScript",
+      "Frontend",
+      "Portfolio-worthy"
+    ],
+    "status": "active",
+    "recruiting": false,
+    "createdBy": "user_1765670539429_0wjm6mn89",
+    "_id": "693dfe8bc3cc691f7ebc87c9",
+    "created": "2025-12-14T00:02:19.782Z",
+    "updated": "2025-12-14T00:02:19.782Z",
+    "id": "693dfe8bc3cc691f7ebc87c9"
+  }
+}

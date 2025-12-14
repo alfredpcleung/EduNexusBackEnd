@@ -21,6 +21,53 @@ const userRouter = require('../app/Routers/user');
 const courseRouter = require('../app/Routers/course');
 
 describe('Authentication & CRUD Tests', () => {
+    describe('JWT & Security Edge Cases', () => {
+      test('Should fail with expired JWT token', async () => {
+        // Create a token that expires immediately
+        const jwt = require('jsonwebtoken');
+        const expiredToken = jwt.sign({ uid: 'fakeuser', userId: 'fakeid', email: 'fake@example.com' }, process.env.JWT_SECRET, { expiresIn: -1 });
+        const res = await request(app)
+          .get('/api/users')
+          .set('Authorization', `Bearer ${expiredToken}`);
+        expect(res.status).toBe(401);
+        expect(res.body.success).toBe(false);
+      });
+
+      test('Should fail with completely invalid JWT token', async () => {
+        const res = await request(app)
+          .get('/api/users')
+          .set('Authorization', 'Bearer invalidtokenstring');
+        expect(res.status).toBe(401);
+        expect(res.body.success).toBe(false);
+      });
+    });
+
+    describe('Password Security', () => {
+      test('Should never return password in user response', async () => {
+        const res = await request(app)
+          .post('/api/auth/signup')
+          .send({
+            firstName: 'NoPass',
+            lastName: 'Visible',
+            email: 'nopass' + Date.now() + '@example.com',
+            password: 'NoPass123',
+            role: 'student',
+            school: 'Test U',
+            fieldOfStudy: 'CS'
+          })
+          .expect(201);
+        expect(res.body.data.user).not.toHaveProperty('password');
+        expect(res.body.data.user).not.toHaveProperty('hashed_password');
+      });
+    });
+
+    describe('Password Reset (Placeholder)', () => {
+      test('Should handle password reset request (not implemented)', async () => {
+        // This is a placeholder for future password reset/forgot password tests
+        // You can implement actual logic and tests when feature is added
+        expect(true).toBe(true);
+      });
+    });
   beforeAll(async () => {
     // Create test app
     app = express();
@@ -91,7 +138,7 @@ describe('Authentication & CRUD Tests', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Missing required fields');
+      expect(res.body.message).toMatch(/last name|email|password/i);
     });
 
     test('Should fail signup with duplicate email', async () => {
@@ -167,7 +214,7 @@ describe('Authentication & CRUD Tests', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('required');
+      expect(res.body.message).toMatch(/password|required/i);
     });
   });
 
@@ -182,7 +229,7 @@ describe('Authentication & CRUD Tests', () => {
       const res = await request(app)
         .post('/api/courses')
         .send({
-          institution: 'Test University',
+          school: 'Test University',
           courseSubject: 'COMP',
           courseNumber: '100',
           title: 'Test Course',
@@ -200,7 +247,7 @@ describe('Authentication & CRUD Tests', () => {
         .post('/api/courses')
         .set('Authorization', 'Bearer invalid_token_here')
         .send({
-          institution: 'Test University',
+          school: 'Test University',
           courseSubject: 'COMP',
           courseNumber: '100',
           title: 'Test Course',
@@ -210,7 +257,7 @@ describe('Authentication & CRUD Tests', () => {
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toContain('Invalid token');
+      expect(res.body.message).toContain('Invalid or expired token');
     });
 
     test('Should successfully create course with valid auth token', async () => {
@@ -218,7 +265,7 @@ describe('Authentication & CRUD Tests', () => {
         .post('/api/courses')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          institution: 'Test University',
+          school: 'Test University',
           courseSubject: 'JS',
           courseNumber: '400',
           title: 'Advanced JavaScript',
@@ -371,14 +418,13 @@ describe('Authentication & CRUD Tests', () => {
   // ============================================
 
   describe('Users - Read (Public)', () => {
-    test('Should list all users without auth', async () => {
+    test('Should not list users without auth', async () => {
       const res = await request(app)
         .get('/api/users');
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(Array.isArray(res.body.data)).toBe(true);
-      expect(res.body.data.length).toBeGreaterThan(0);
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('No token provided');
     });
 
     test('Should get user by ID without auth', async () => {

@@ -62,20 +62,35 @@ exports.getProject = async (req, res) => {
  */
 exports.createProject = async (req, res) => {
   try {
-    const { title, description, courseId, tags, status } = req.body;
+    const { projectTitle, description, courseSubject, courseNumber, members, tags, status, createdBy } = req.body;
     const ownerUid = req.user.uid;
 
-    if (!title) {
-      return errorResponse(res, 400, 'Title is required');
+    if (!projectTitle) {
+      return errorResponse(res, 400, 'projectTitle is required');
+    }
+    if (!courseSubject) {
+      return errorResponse(res, 400, 'courseSubject is required');
+    }
+    if (!courseNumber) {
+      return errorResponse(res, 400, 'courseNumber is required');
+    }
+    if (!members || !Array.isArray(members) || members.length < 2) {
+      return errorResponse(res, 400, 'At least two members are required');
+    }
+    if (!createdBy) {
+      return errorResponse(res, 400, 'createdBy is required');
     }
 
     const newProject = new Project({
-      title,
+      projectTitle,
       description,
       owner: ownerUid,
-      courseId,
+      courseSubject,
+      courseNumber,
+      members,
       tags: tags || [],
-      status: status || 'active'
+      status: status || 'active',
+      createdBy
     });
 
     await newProject.save();
@@ -84,6 +99,7 @@ exports.createProject = async (req, res) => {
       data: newProject
     });
   } catch (error) {
+    console.error('Error creating project:', error);
     res.status(500).json({
       success: false,
       message: 'Error creating project',

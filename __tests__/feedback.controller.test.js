@@ -43,8 +43,8 @@ describe('Feedback Controller Tests', () => {
         lastName: 'User',
         email: 'reviewer@test.com',
         password: 'password123',
-        schoolName: 'Test University',
-        programName: 'Computer Science'
+        school: 'Test University',
+        fieldOfStudy: 'Computer Science'
       });
 
     token1 = signup1.body.data.token;
@@ -57,8 +57,8 @@ describe('Feedback Controller Tests', () => {
         lastName: 'Creator',
         email: 'creator@test.com',
         password: 'password456',
-        schoolName: 'Test University',
-        programName: 'Computer Science'
+        school: 'Test University',
+        fieldOfStudy: 'Computer Science'
       });
 
     token2 = signup2.body.data.token;
@@ -71,8 +71,8 @@ describe('Feedback Controller Tests', () => {
         lastName: 'Reviewer',
         email: 'reviewer2@test.com',
         password: 'password789',
-        schoolName: 'Test University',
-        programName: 'Computer Science'
+        school: 'Test University',
+        fieldOfStudy: 'Computer Science'
       });
 
     token3 = signup3.body.data.token;
@@ -83,8 +83,12 @@ describe('Feedback Controller Tests', () => {
       .post('/projects')
       .set('Authorization', `Bearer ${token2}`)
       .send({
-        title: 'First Project',
+        projectTitle: 'First Project',
         description: 'For feedback testing',
+        courseSubject: 'CS',
+        courseNumber: '101',
+        members: ['user1', 'user2'],
+        createdBy: user2Uid,
         status: 'active'
       });
 
@@ -94,8 +98,12 @@ describe('Feedback Controller Tests', () => {
       .post('/projects')
       .set('Authorization', `Bearer ${token2}`)
       .send({
-        title: 'Second Project',
+        projectTitle: 'Second Project',
         description: 'Another project',
+        courseSubject: 'CS',
+        courseNumber: '102',
+        members: ['user1', 'user2'],
+        createdBy: user2Uid,
         status: 'active'
       });
 
@@ -362,8 +370,13 @@ describe('Feedback Controller Tests', () => {
         .post('/projects')
         .set('Authorization', `Bearer ${token2}`)
         .send({
-          title: 'No Feedback Project',
-          description: 'Will have no feedback'
+          projectTitle: 'No Feedback Project',
+          description: 'Will have no feedback',
+          courseSubject: 'CS',
+          courseNumber: '999',
+          members: ['user1', 'user2'],
+          createdBy: user2Uid,
+          status: 'active'
         });
 
       const projectId = projectRes.body.data._id;
@@ -524,7 +537,13 @@ describe('Feedback Controller Tests', () => {
         .post('/projects')
         .set('Authorization', `Bearer ${token2}`)
         .send({
-          title: 'Delete Test Project'
+          projectTitle: 'Delete Test Project',
+          description: 'Project for delete test',
+          courseSubject: 'CS',
+          courseNumber: '888',
+          members: ['user1', 'user2'],
+          createdBy: user2Uid,
+          status: 'active'
         });
 
       const testProjectId = newProjectRes.body.data._id;
@@ -573,7 +592,13 @@ describe('Feedback Controller Tests', () => {
         .post('/projects')
         .set('Authorization', `Bearer ${token2}`)
         .send({
-          title: 'Delete Prevention Test Project'
+          projectTitle: 'Delete Prevention Test Project',
+          description: 'Project for delete prevention test',
+          courseSubject: 'CS',
+          courseNumber: '887',
+          members: ['user1', 'user2'],
+          createdBy: user2Uid,
+          status: 'active'
         });
 
       const testProjectId = newProjectRes.body.data._id;
@@ -771,7 +796,13 @@ describe('Feedback Controller Tests', () => {
         .post('/projects')
         .set('Authorization', `Bearer ${token2}`)
         .send({
-          title: 'Unique Test Project'
+          projectTitle: 'Unique Test Project',
+          description: 'Project for unique feedback test',
+          courseSubject: 'CS',
+          courseNumber: '886',
+          members: ['user1', 'user2'],
+          createdBy: user2Uid,
+          status: 'active'
         });
 
       const newProjectId = newProject.body.data._id;

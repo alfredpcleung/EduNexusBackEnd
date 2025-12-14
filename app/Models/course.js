@@ -29,9 +29,10 @@ const CourseRefSchema = new Schema(
 const CourseSchema = new Schema(
   {
     // Identifiers (normalized, compound unique)
-    institution: {
+    school: {
       type: String,
-      required: [true, 'Institution is required'],
+      required: [true, 'School is required'],
+      maxlength: 50,
       trim: true
     },
     courseSubject: {
@@ -92,9 +93,9 @@ const CourseSchema = new Schema(
   { collection: 'courses' }
 );
 
-// Compound unique index: one course per institution + subject + number
+// Compound unique index: one course per school + subject + number
 CourseSchema.index(
-  { institution: 1, courseSubject: 1, courseNumber: 1 },
+  { school: 1, courseSubject: 1, courseNumber: 1 },
   { unique: true }
 );
 

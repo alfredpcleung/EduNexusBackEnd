@@ -37,6 +37,7 @@ Create `.env`:
 ATLAS_DB=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/<db>
 PORT=3000
 JWT_SECRET=your_secret_key
+ENFORCE_INSTITUTION_DOMAIN=your_domain.com
 ```
 
 ```bash
@@ -81,3 +82,14 @@ npm test -- --coverage                      # With coverage
 ## License
 
 ISC | Alfred Leung
+
+---
+
+## Environment Variables
+
+Add the following to your `.env` file:
+
+- `ATLAS_DB`: MongoDB connection string.
+- `PORT`: Port number for the server (default: 3000).
+- `JWT_SECRET`: Secret key for JWT authentication.
+- `ENFORCE_INSTITUTION_DOMAIN`: (Optional) Restrict user emails to a specific domain (e.g., `example.com`).

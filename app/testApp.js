@@ -1,31 +1,23 @@
-require('dotenv').config();
+// Minimal Express app for Supertest (no listen)
+const Express = require('express');
+const cors = require('cors');
+const logger = require('morgan');
+const createError = require('http-errors');
+const configDb = require('../config/db.js');
+const authRouter = require('./Routers/auth.js');
+const userRouter = require('./Routers/user.js');
+const courseRotuer = require('./Routers/course.js');
+const projectRouter = require('./Routers/project.js');
+const feedbackRouter = require('./Routers/feedback.js');
+const dashboardRouter = require('./Routers/dashboard.js');
+const reviewRouter = require('./Routers/review.js');
+const statsRouter = require('./Routers/stats.js');
 
-var Express = require("express");
-var cors = require('cors');
-var createError = require('http-errors');
-var logger = require('morgan');
-var configDb = require('./config/db.js');
-var authRouter = require('./app/Routers/auth.js');
-var userRouter = require('./app/Routers/user.js');
-var courseRotuer = require('./app/Routers/course.js');
-var projectRouter = require('./app/Routers/project.js');
-var feedbackRouter = require('./app/Routers/feedback.js');
-var dashboardRouter = require('./app/Routers/dashboard.js');
-var reviewRouter = require('./app/Routers/review.js');
-var statsRouter = require('./app/Routers/stats.js');
-
-
-var app = Express();
+const app = Express();
 configDb();
 
-// Global request logger for debugging
-app.use((req, res, next) => {
-  console.log(`[REQUEST] ${req.method} ${req.originalUrl}`);
-  next();
-});
-
 app.use(cors());
-app.use(logger('dev') );
+app.use(logger('dev'));
 app.use(Express.json());
 app.use(Express.urlencoded({ extended: false }));
 
@@ -42,18 +34,12 @@ app.use(function(req, res, next) {
   next(createError(404));
 });
 
-// error handler
 app.use(function(err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-  
   let statusCode = err.status || 500;
   let message = err.message;
-  
-  // Check if it's a Mongoose error by checking properties
   const isMongooseValidationError = err.errors !== undefined || err.name === 'ValidationError';
-  
-  // Handle Mongoose validation errors
   if (isMongooseValidationError || err.name === 'ValidationError') {
     statusCode = 400;
     if (err.errors) {
@@ -61,33 +47,19 @@ app.use(function(err, req, res, next) {
       message = errors.join(', ') || 'Validation failed';
     }
   }
-  
-  // Handle Mongoose cast errors (invalid ObjectId)
   if (err.name === 'CastError' || err.kind === 'ObjectId') {
     statusCode = 400;
     message = 'Invalid ID format';
   }
-  
-  // Handle Mongoose duplicate key errors
-  if (err.code === 11000 || err.message.includes('duplicate key')) {
+  if (err.code === 11000 || (err.message && err.message.includes('duplicate key'))) {
     statusCode = 400;
     if (err.keyPattern) {
       const fields = Object.keys(err.keyPattern);
       message = `Duplicate value for field(s): ${fields.join(', ')}`;
     }
   }
-  
   res.status(statusCode);
-  res.json(
-    {
-      success: false,
-      message: message
-    }
-  );
+  res.json({ success: false, message });
 });
 
-
-app.listen(3000 || 1000, ()=> {
-    console.log("Server is running at  http://localhost:3000/");
-    //SebastianVelasco
-});
+module.exports = app;
